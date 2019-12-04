@@ -11,7 +11,7 @@ public class App
 {
     public static void main( String[] args )
     {
-        Tile t = new Tile(Simple.DOTS, 2);
+        Tile t = new Tile("2B");
         System.out.println(t);
     }
 }

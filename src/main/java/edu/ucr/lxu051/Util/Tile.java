@@ -12,6 +12,13 @@ public class Tile {
         this.number = number;
     }
 
+    public Tile(String tile) { // 1B, 2T, 3W
+        Simple simple = Simple.valueOf(tile.substring(1));
+        int number = Integer.valueOf(tile.substring(0, 1));
+        this.simple = simple;
+        this.number = number;
+    }
+
     public Simple getSimple() {
         return simple;
     }
@@ -23,7 +30,7 @@ public class Tile {
     @Override
     public String toString() {
         switch (this.simple) {
-            case DOTS:
+            case B:
                 if (number == 1) return "\uD83C\uDC19";
                 if (number == 2) return "\uD83C\uDC1A";
                 if (number == 3) return "\uD83C\uDC1B";
@@ -33,7 +40,7 @@ public class Tile {
                 if (number == 7) return "\uD83C\uDC1F";
                 if (number == 8) return "\uD83C\uDC20";
                 if (number == 9) return "\uD83C\uDC21";
-            case BAMBOO:
+            case T:
                 if (number == 1) return "\uD83C\uDC10";
                 if (number == 2) return "\uD83C\uDC11";
                 if (number == 3) return "\uD83C\uDC12";
@@ -43,7 +50,7 @@ public class Tile {
                 if (number == 7) return "\uD83C\uDC16";
                 if (number == 8) return "\uD83C\uDC17";
                 if (number == 9) return "\uD83C\uDC18";
-            case CHARACTERS:
+            case W:
                 if (number == 1) return "\uD83C\uDC07";
                 if (number == 2) return "\uD83C\uDC08";
                 if (number == 3) return "\uD83C\uDC09";
