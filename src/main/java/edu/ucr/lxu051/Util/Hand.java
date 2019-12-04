@@ -48,6 +48,10 @@ public class Hand {
         this.concealedHand[position]--;
     }
 
+    public void canPeng() {
+
+    }
+
     public Set<Tile> isReady() throws IOException {
         Set<Tile> readySet = new LinkedHashSet<>();
         for (int i = 0; i < 27; i++) {
