@@ -1,9 +1,7 @@
 package edu.ucr.lxu051.Util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 
 public class Hand {
     private int[] concealedHand; //Bing 0-8, Tiao 9-17, Wan 18-26
@@ -45,10 +43,11 @@ public class Hand {
         initHand(list);
     }
 
-    public Set<Tile> isReady() {
-        Set<Tile> readySet = new HashSet<>();
-        int[] handCopy = Arrays.copyOf(this.concealedHand, 27);
-        for (int i = 0; i < 27; i++) {
+    public Set<Tile> isReady() throws IOException {
+        Set<Tile> readySet = new LinkedHashSet<>();
+        for (int i = 8; i < 27; i++) {
+//            System.out.println(i);
+            int[] handCopy = Arrays.copyOf(this.concealedHand, 27);
             if (isReadyHelper(handCopy, i)) {
                 readySet.add(positionToTile(i));
             }
@@ -56,12 +55,39 @@ public class Hand {
         return readySet;
     }
 
-    private boolean isReadyHelper(int[] curHand, int i) {
+    private boolean isReadyHelper(int[] curHand, int i) throws IOException {
         curHand[i]++;
         if (curHand[i] > 4) {
-            throw new IllegalStateException("Illegal - has 5 same tile.");
+            return false;
         }
-
+        ArrayList<String> testSplits = new ArrayList<>();
+        String split = "";
+        for (int j = 0; j < 27; j++) {
+            if (curHand[j] == 0) {
+                if (!split.isEmpty()) {
+                    testSplits.add(split);
+                }
+                split = "";
+            } else {
+                if (j % 9 == 0) {
+                    if (!split.isEmpty()) {
+                        testSplits.add(split);
+                    }
+                    split = "" + curHand[j];
+                } else {
+                    split += curHand[j];
+                }
+            }
+        }
+        if (!split.isEmpty()) {
+            testSplits.add(split);
+        }
+        for (String testSplit : testSplits) {
+            HandUtil handUtil = new HandUtil(testSplit);
+            if (handUtil.reduce() == false) {
+                return false;
+            }
+        }
         return true;
     }
 

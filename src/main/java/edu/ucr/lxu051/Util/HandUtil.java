@@ -27,8 +27,34 @@ public class HandUtil {
         int handSeqCopy = this.handSeq;
         if (this.totalNum % 3 == 0) {
             return reduce3(handSeqCopy);
+        } else if(this.totalNum % 3 == 2) {
+            String seq = String.valueOf(handSeqCopy);
+            for (int i = 0; i < seq.length(); i++) {
+                if (Integer.parseInt(String.valueOf(seq.charAt(i))) > 2) {
+                    int handSeqAfterRemovingJiang = handSeqCopy - 2 * (int) Math.pow(10, seq.length() - i - 1);
+                    if (reduce3(handSeqAfterRemovingJiang)) {
+                        return true;
+                    }
+                } else if (Integer.parseInt(String.valueOf(seq.charAt(i))) == 2) {
+                    if (seq.length() == 1) {
+                        return true;
+                    } else {
+                        String before = seq.substring(0, i);
+                        boolean works = reduce3(Integer.parseInt(before));
+                        if (i < seq.length() - 1) {
+                            String after = seq.substring(i + 1);
+                            works = works && reduce3(Integer.parseInt(after));
+                        }
+                        if (works) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        } else {
+            return false;
         }
-        return true;
     }
 
     private boolean reduce3(int handSeq) {
