@@ -19,18 +19,7 @@ public class Hand {
             throw new IllegalArgumentException("Initialization should be 13 tiles.");
         }
         for (Tile tile : handList) {
-            int index = tile.getNumber() - 1;
-            switch (tile.getSimple()) {
-                case B:
-                    concealedHand[index]++;
-                    break;
-                case T:
-                    concealedHand[index + 9]++;
-                    break;
-                case W:
-                    concealedHand[index + 18]++;
-                    break;
-            }
+            concealedHand[tileToPosition(tile)]++;
         }
     }
 
@@ -100,6 +89,19 @@ public class Hand {
         } else {
             return new Tile(Simple.T, number);
         }
+    }
+
+    private int tileToPosition(Tile tile) {
+        int index = tile.getNumber() - 1;
+        switch (tile.getSimple()) {
+            case B:
+                return index;
+            case T:
+                return index + 9;
+            case W:
+                return index + 18;
+        }
+        return -1;
     }
 
     @Override
