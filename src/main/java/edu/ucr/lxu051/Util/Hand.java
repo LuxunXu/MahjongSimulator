@@ -45,7 +45,7 @@ public class Hand {
 
     public Set<Tile> isReady() throws IOException {
         Set<Tile> readySet = new LinkedHashSet<>();
-        for (int i = 8; i < 27; i++) {
+        for (int i = 0; i < 27; i++) {
 //            System.out.println(i);
             int[] handCopy = Arrays.copyOf(this.concealedHand, 27);
             if (isReadyHelper(handCopy, i)) {
