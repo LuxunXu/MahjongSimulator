@@ -17,7 +17,7 @@ public class App
     {
 
         Hand hand1 = new Hand("NORTH");
-        hand1.initHand("4B 4B 4B 2B 3B 4B 5B 6B 7B 8B 6B 6B 6B");
+        hand1.initHand("4B 4B 2B 2B 3B 3B 5B 5B 7B 7B 9B 9B 9B");
         System.out.println(hand1);
         System.out.println(hand1.isReady());
 

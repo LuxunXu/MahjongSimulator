@@ -32,6 +32,22 @@ public class Hand {
         initHand(list);
     }
 
+    public void drawTile(Tile tile) {
+        drawTile(tileToPosition(tile));
+    }
+
+    public void drawTile(int position) {
+        this.concealedHand[position]++;
+    }
+
+    public void discardTile(Tile tile) {
+        discardTile(tileToPosition(tile));
+    }
+
+    public void discardTile(int position) {
+        this.concealedHand[position]--;
+    }
+
     public Set<Tile> isReady() throws IOException {
         Set<Tile> readySet = new LinkedHashSet<>();
         for (int i = 0; i < 27; i++) {
@@ -48,6 +64,10 @@ public class Hand {
         curHand[i]++;
         if (curHand[i] > 4) {
             return false;
+        }
+        boolean isSevenPairs = isSevenPairs(curHand);
+        if (isSevenPairs) {
+            return true;
         }
         ArrayList<String> testSplits = new ArrayList<>();
         String split = "";
@@ -78,6 +98,18 @@ public class Hand {
             }
         }
         return true;
+    }
+
+    private boolean isSevenPairs(int[] curHand) {
+        int count = 0;
+        for (int num : curHand) {
+            if (num > 0) {
+                if (num % 2 == 0) {
+                    count += num / 2;
+                }
+            }
+        }
+        return count == 7;
     }
 
     private Tile positionToTile(int i) {
