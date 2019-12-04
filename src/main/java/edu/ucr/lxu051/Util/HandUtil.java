@@ -39,8 +39,11 @@ public class HandUtil {
                     if (seq.length() == 1) {
                         return true;
                     } else {
-                        String before = seq.substring(0, i);
-                        boolean works = reduce3(Integer.parseInt(before));
+                        boolean works = true;
+                        if (i > 0) {
+                            String before = seq.substring(0, i);
+                            works = reduce3(Integer.parseInt(before));
+                        }
                         if (i < seq.length() - 1) {
                             String after = seq.substring(i + 1);
                             works = works && reduce3(Integer.parseInt(after));
