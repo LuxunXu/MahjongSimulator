@@ -14,7 +14,7 @@ public class Hand {
         this.orientation = Orientation.valueOf(orientation);
     }
 
-    public void initHand(ArrayList<Tile> handList) { // list should be 13 long
+    public void initHand(LinkedList<Tile> handList) { // list should be 13 long
         if (handList.size() != 13) {
             throw new IllegalArgumentException("Initialization should be 13 tiles.");
         }
@@ -24,7 +24,7 @@ public class Hand {
     }
 
     public void initHand(String handString) {
-        ArrayList<Tile> list = new ArrayList<>();
+        LinkedList<Tile> list = new LinkedList<>();
         String[] tileTokens = handString.split("\\s");
         for (String tileToken : tileTokens) {
             list.add(new Tile(tileToken));
@@ -40,12 +40,48 @@ public class Hand {
         this.concealedHand[position]++;
     }
 
+    public boolean canDiscardTile(Tile tile) {
+        int i = tileToPosition(tile);
+        if (this.concealedHand[i] > 0) {
+            return true;
+        }
+        return false;
+    }
+
     public void discardTile(Tile tile) {
         discardTile(tileToPosition(tile));
     }
 
     public void discardTile(int position) {
         this.concealedHand[position]--;
+    }
+
+    public boolean canPeng(Tile tile) {
+        int i = tileToPosition(tile);
+        if (this.concealedHand[i] == 2 || this.concealedHand[i] == 3) {
+            return true;
+        }
+        return false;
+    }
+
+    public void peng(Tile tile) {
+        int i = tileToPosition(tile);
+        this.concealedHand[i] -= 2;
+        this.revealedHand[i] = 3;
+    }
+
+    public boolean canGang(Tile tile) {
+        int i = tileToPosition(tile);
+        if (this.concealedHand[i] == 3) {
+            return true;
+        }
+        return false;
+    }
+
+    public void gang(Tile tile) {
+        int i = tileToPosition(tile);
+        this.concealedHand[i] -= 3;
+        this.revealedHand[i] = 4;
     }
 
     public Set<Tile> isReady() throws IOException {
@@ -147,10 +183,12 @@ public class Hand {
         }
         sb.append(" ");
         for (int i = 0; i < 27; i++) {
-            for (int j = 0; j < this.revealedHand[i]; j++) {
-                sb.append(positionToTile(i));
+            if (this.revealedHand[i] > 0) {
+                for (int j = 0; j < this.revealedHand[i]; j++) {
+                    sb.append(positionToTile(i));
+                }
+                sb.append(" ");
             }
-            sb.append(" ");
         }
         return sb.toString();
     }
