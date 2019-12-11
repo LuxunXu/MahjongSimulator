@@ -1,5 +1,6 @@
 package edu.ucr.lxu051;
 
+import edu.ucr.lxu051.UI.AddPane;
 import edu.ucr.lxu051.UI.ConfirmBox;
 import edu.ucr.lxu051.Util.Hand;
 import edu.ucr.lxu051.Util.HandUtil;
@@ -12,6 +13,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -53,8 +55,11 @@ public class App extends Application {
         window = primaryStage;
         BorderPane border = new BorderPane();
 
-        HBox masterControl = addMasterControl();
+        HBox masterControl = AddPane.addMasterControl();
         border.setTop(masterControl);
+
+        GridPane mainFrame = AddPane.addGridPane();
+        border.setCenter(mainFrame);
 
         Scene scene = new Scene(border, 1280, 960);
         window.setScene(scene);
@@ -62,24 +67,4 @@ public class App extends Application {
         window.show();
     }
 
-    private HBox addMasterControl() {
-
-        HBox hbox = new HBox();
-        hbox.setPadding(new Insets(15, 12, 15, 12));
-        hbox.setSpacing(10);   // Gap between nodes
-        hbox.setStyle("-fx-background-color: #336699;");
-
-        Button buttonNewGame = new Button("New Game");
-        buttonNewGame.setPrefSize(100, 20);
-        buttonNewGame.setOnAction(e -> {
-            ConfirmBox.display("Are you sure?", "Are you sure to start a new game?");
-        });
-
-        Button buttonProjected = new Button("Last Step");
-        buttonProjected.setPrefSize(100, 20);
-
-        hbox.getChildren().addAll(buttonNewGame, buttonProjected);
-
-        return hbox;
-    }
 }
