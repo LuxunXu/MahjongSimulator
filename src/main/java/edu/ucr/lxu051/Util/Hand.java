@@ -6,6 +6,7 @@ import java.util.*;
 public class Hand {
     private int[] concealedHand; //Bing 0-8, Tiao 9-17, Wan 18-26
     private int[] revealedHand;
+    private Simple giveUpSimple;
     private Orientation orientation;
 
     public Hand(String orientation) {
