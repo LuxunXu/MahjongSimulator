@@ -31,7 +31,7 @@ public class Game {
         distributeStartingTiles();
     }
 
-    public void distributeStartingTiles() {
+    private void distributeStartingTiles() {
         for (int i = 0; i < players.length; i++) {
             LinkedList<Tile> tempHand = new LinkedList<>();
             for (int j = 0; j < 13; j++) {

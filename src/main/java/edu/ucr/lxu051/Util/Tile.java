@@ -64,5 +64,40 @@ public class Tile {
         return null;
     }
 
+    public String toFileName() {
+        switch (this.simple) {
+            case B:
+                if (number == 1) return "Pin1";
+                if (number == 2) return "Pin2";
+                if (number == 3) return "Pin3";
+                if (number == 4) return "Pin4";
+                if (number == 5) return "Pin5";
+                if (number == 6) return "Pin6";
+                if (number == 7) return "Pin7";
+                if (number == 8) return "Pin8";
+                if (number == 9) return "Pin9";
+            case T:
+                if (number == 1) return "Sou1";
+                if (number == 2) return "Sou2";
+                if (number == 3) return "Sou3";
+                if (number == 4) return "Sou4";
+                if (number == 5) return "Sou5";
+                if (number == 6) return "Sou6";
+                if (number == 7) return "Sou7";
+                if (number == 8) return "Sou8";
+                if (number == 9) return "Sou9";
+            case W:
+                if (number == 1) return "Man1";
+                if (number == 2) return "Man2";
+                if (number == 3) return "Man3";
+                if (number == 4) return "Man4";
+                if (number == 5) return "Man5";
+                if (number == 6) return "Man6";
+                if (number == 7) return "Man7";
+                if (number == 8) return "Man8";
+                if (number == 9) return "Man9";
+        }
+        return null;
+    }
 
 }
