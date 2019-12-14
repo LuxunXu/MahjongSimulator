@@ -1,11 +1,10 @@
 package edu.ucr.lxu051;
 
+import edu.ucr.lxu051.Util.Hand;
+
+import javax.swing.*;
 import java.io.IOException;
 
-/**
- * Hello world!
- *
- */
 public class App {
 
     public static void main( String[] args ) throws IOException {
@@ -20,11 +19,17 @@ public class App {
 
         Game game = new Game();
         game.initGame();
-        System.out.println(game.getPlayerHand(0));
-        System.out.println(game.getPlayerHand(1));
-        System.out.println(game.getPlayerHand(2));
-        System.out.println(game.getPlayerHand(3));
+//        System.out.println(game.getPlayerHand(0));
+//        System.out.println(game.getPlayerHand(1));
+//        System.out.println(game.getPlayerHand(2));
+//        System.out.println(game.getPlayerHand(3));
 
+        JFrame jFrame = new JFrame();
+        jFrame.setTitle("Mahjong Simulator");
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jFrame.add(game);
+        jFrame.setSize(1300, 1300);
+        jFrame.setVisible(true);
     }
 
 }

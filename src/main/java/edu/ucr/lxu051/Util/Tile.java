@@ -14,7 +14,7 @@ public class Tile {
 
     public Tile(String tile) { // 1B, 2T, 3W
         Simple simple = Simple.valueOf(tile.substring(1));
-        int number = Integer.valueOf(tile.substring(0, 1));
+        int number = Integer.parseInt(tile.substring(0, 1));
         this.simple = simple;
         this.number = number;
     }

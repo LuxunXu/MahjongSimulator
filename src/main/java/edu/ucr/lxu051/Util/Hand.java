@@ -43,10 +43,7 @@ public class Hand {
 
     public boolean canDiscardTile(Tile tile) {
         int i = tileToPosition(tile);
-        if (this.concealedHand[i] > 0) {
-            return true;
-        }
-        return false;
+        return this.concealedHand[i] > 0;
     }
 
     public void discardTile(Tile tile) {
@@ -59,10 +56,7 @@ public class Hand {
 
     public boolean canPeng(Tile tile) {
         int i = tileToPosition(tile);
-        if (this.concealedHand[i] == 2 || this.concealedHand[i] == 3) {
-            return true;
-        }
-        return false;
+        return this.concealedHand[i] == 2 || this.concealedHand[i] == 3;
     }
 
     public void peng(Tile tile) {
@@ -73,10 +67,7 @@ public class Hand {
 
     public boolean canGang(Tile tile) {
         int i = tileToPosition(tile);
-        if (this.concealedHand[i] == 3) {
-            return true;
-        }
-        return false;
+        return this.concealedHand[i] == 3;
     }
 
     public void gang(Tile tile) {
@@ -130,7 +121,7 @@ public class Hand {
         }
         for (String testSplit : testSplits) {
             HandUtil handUtil = new HandUtil(testSplit);
-            if (handUtil.reduce() == false) {
+            if (!handUtil.reduce()) {
                 return false;
             }
         }
@@ -173,10 +164,26 @@ public class Hand {
         return -1;
     }
 
+    public int[] getConcealedHand() {
+        return concealedHand;
+    }
+
+    public int[] getRevealedHand() {
+        return revealedHand;
+    }
+
+    public Simple getGiveUpSimple() {
+        return giveUpSimple;
+    }
+
+    public Orientation getOrientation() {
+        return orientation;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(orientation + ":\t");
+        sb.append(orientation).append(":\t");
         for (int i = 0; i < 27; i++) {
             for (int j = 0; j < this.concealedHand[i]; j++) {
                 sb.append(positionToTile(i));
