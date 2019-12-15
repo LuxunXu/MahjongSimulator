@@ -12,7 +12,7 @@ public class HandUtil {
     private Properties splitRule;
 
     public HandUtil(String handSeq) throws IOException {
-        this.handSeq = Integer.valueOf(handSeq);
+        this.handSeq = Integer.parseInt(handSeq);
         int temp = this.handSeq;
         this.totalNum = 0;
         while (temp > 0) {
@@ -68,21 +68,21 @@ public class HandUtil {
             int length = seq.length();
             String toSubtract = this.splitRule.getProperty(seq.substring(0, 3));
             if (toSubtract == null) return false;
-            int newHandSeq = handSeq - Integer.valueOf(toSubtract) * (int) Math.pow(10, length - 3);
+            int newHandSeq = handSeq - Integer.parseInt(toSubtract) * (int) Math.pow(10, length - 3);
             return reduce3(newHandSeq);
         } else if (handSeq < 10) {
             String seq = String.valueOf(handSeq);
             int length = seq.length();
             String toSubtract = this.splitRule.getProperty(seq);
             if (toSubtract == null) return false;
-            int newHandSeq = handSeq - Integer.valueOf(toSubtract);
+            int newHandSeq = handSeq - Integer.parseInt(toSubtract);
             return reduce3(newHandSeq);
         } else {
             String seq = String.valueOf(handSeq);
             int length = seq.length();
             String toSubtract = this.splitRule.getProperty(seq.substring(0, 2));
             if (toSubtract == null) return false;
-            int newHandSeq = handSeq - Integer.valueOf(toSubtract) * (int) Math.pow(10, length - 2);
+            int newHandSeq = handSeq - Integer.parseInt(toSubtract) * (int) Math.pow(10, length - 2);
             return reduce3(newHandSeq);
         }
     }

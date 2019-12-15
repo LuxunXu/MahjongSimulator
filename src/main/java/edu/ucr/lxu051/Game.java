@@ -123,11 +123,12 @@ public class Game extends JPanel {
     public void drawWest(Graphics g) throws TranscoderException {
         Graphics2D g2d = (Graphics2D) g;
         int[] revealedHand = players.get(Orientation.WEST).getRevealedHand();
+        String fileName;
         for (int i : revealedHand) {
-            if (i == 3) {
-
-            } else if (i == 4) {
-
+            if (revealedHand[i] == 3) {
+                fileName = Hand.positionToTile(i).toFileName();
+            } else if (revealedHand[i] == 4) {
+                fileName = Hand.positionToTile(i).toFileName();
             }
         }
         BufferedImage i = loadImage(PIC_SRC + "Man1.svg", 60, 80);
