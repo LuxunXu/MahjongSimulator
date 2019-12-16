@@ -1,6 +1,5 @@
 package edu.ucr.lxu051;
 
-import edu.ucr.lxu051.Util.Hand;
 import edu.ucr.lxu051.Util.Orientation;
 import edu.ucr.lxu051.Util.Simple;
 import edu.ucr.lxu051.Util.Tile;
@@ -44,29 +43,46 @@ public class App extends JFrame {
         setBounds(0, 0, 64 * SCALE, 68 * SCALE);
 //        setSize(64 * SCALE, 64 * SCALE);
         contentPane = new JPanel();
-        contentPane.setLayout(new BorderLayout(0, 0));
+        contentPane.setLayout(new BorderLayout());
         setContentPane(contentPane);
         setResizable(false);
 
         JPanel controlPanel = new JPanel();
+        controlPanel.setSize(64 * SCALE, 4 * SCALE);
         JButton jButton = new JButton("Go");
         jButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                game.offer(Orientation.WEST);
-                game.discard(Orientation.WEST);
+                Orientation whosTurn = game.getWhosTurn();
+                game.offer(whosTurn);
+                game.discard(whosTurn);
+                if (whosTurn.equals(Orientation.EAST)) {
+                    game.setWhosTurn(Orientation.SOUTH);
+                } else if (whosTurn.equals(Orientation.SOUTH)) {
+                    game.setWhosTurn(Orientation.WEST);
+                } else if (whosTurn.equals(Orientation.WEST)) {
+                    game.setWhosTurn(Orientation.NORTH);
+                } else {
+                    game.setWhosTurn(Orientation.EAST);
+                }
             }
         });
         controlPanel.add(jButton);
 
-        game = new Game(SCALE, 4);
+        game = new Game(SCALE, 576456);
         game.initGame();
+        game.setSize(64 * SCALE, 64 * SCALE);
+
+//        game.getPlayerHand(Orientation.SOUTH).gangConcealed(new Tile(Simple.B, 2));
+//        game.getPlayerHand(Orientation.SOUTH).peng(new Tile(Simple.T, 1));
+//        game.getPlayerHand(Orientation.SOUTH).discardTile(new Tile(Simple.B, 1));
+//        game.getPlayerHand(Orientation.NORTH).gangConcealed(new Tile(Simple.W, 3));
+//        game.getPlayerHand(Orientation.NORTH).peng(new Tile(Simple.T, 1));
+//        game.getPlayerHand(Orientation.NORTH).discardTile(new Tile(Simple.W, 1));
 
         contentPane.add(game, BorderLayout.CENTER);
         contentPane.add(controlPanel, BorderLayout.SOUTH);
     }
-
-
 
     public Game getGame() {
         return game;

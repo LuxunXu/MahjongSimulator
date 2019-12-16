@@ -25,14 +25,18 @@ public class ImageProcessor {
         return null;
     }
 
-    public static BufferedImage rotate( BufferedImage img) {
+    public static BufferedImage rotate(BufferedImage img, boolean right) {
         int width  = img.getWidth();
         int height = img.getHeight();
         BufferedImage newImage = new BufferedImage(height, width, img.getType());
 
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                newImage.setRGB(height - 1 - j, i, img.getRGB(i, j));
+                if (right) {
+                    newImage.setRGB(height - 1 - j, i, img.getRGB(i, j));
+                } else {
+                    newImage.setRGB(j, width - 1 - i, img.getRGB(i, j));
+                }
             }
         }
         return newImage;

@@ -8,11 +8,13 @@ public class Hand {
     private int[] revealedHand;
     private Simple giveUpSimple;
     private Orientation orientation;
+    private boolean finished;
 
-    public Hand(String orientation) {
-        this.concealedHand = new int[27];
-        this.revealedHand = new int[27];
-        this.orientation = Orientation.valueOf(orientation);
+    public Hand(Orientation orientation) {
+        concealedHand = new int[27];
+        revealedHand = new int[27];
+        this.orientation = orientation;
+        finished = false;
     }
 
     public void initHand(LinkedList<Tile> handList) { // list should be 13 long
