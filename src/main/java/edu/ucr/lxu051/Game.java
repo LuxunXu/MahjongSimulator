@@ -1,41 +1,65 @@
 package edu.ucr.lxu051;
 
-
-import edu.ucr.lxu051.UI.BufferedImageTranscoder;
+import edu.ucr.lxu051.UI.ImageProcessor;
 import edu.ucr.lxu051.Util.*;
-import org.apache.batik.transcoder.TranscoderException;
-import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.image.PNGTranscoder;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
 import java.util.*;
 
 public class Game extends JPanel {
+    private int scale = 20;
     private final String PIC_SRC = "src/main/resources/Pic/Regular/";
+    private final String PIC_FORMAT = ".svg";
     private LinkedList<Tile> tileMountain;
-    private Map<Orientation, LinkedList<Tile>> discardedPile;
+    private Map<Orientation, LinkedList<Tile>> discardedPiles;
     private int tileLeft;
     private Map<Orientation, Hand> players;
+    private long seed;
+    private final BufferedImage FRONT = ImageProcessor.loadImage(PIC_SRC + "Front" + PIC_FORMAT, 3 * scale, 4 * scale);
 
-    public Game() {
-        tileMountain = new LinkedList<>();
-        discardedPile = new HashMap<>();
-        players = new HashMap<>();
+    public Game(int scale) {
+        this(scale, 0);
     }
 
-    public void initGame() throws IOException {
+    public Game(int scale, long seed) {
+        tileMountain = new LinkedList<>();
+        discardedPiles = new HashMap<>();
+        players = new HashMap<>();
+        this.seed = seed;
+        this.scale = scale;
+    }
+
+    public void initGame() {
         genMountain();
         Random rnd = new Random();
+        if (seed > 0) {
+            rnd.setSeed(seed);
+        }
         Collections.shuffle(tileMountain, rnd);
         for (Orientation orientation : Orientation.values()) {
             players.put(orientation, new Hand(orientation.name()));
-            discardedPile.put(orientation, new LinkedList<>());
+            discardedPiles.put(orientation, new LinkedList<>());
         }
         distributeStartingTiles();
-//        revalidate();
+        repaint();
+    }
+
+    public void offer(Orientation orientation) {
+        Tile tile = tileMountain.pollFirst();
+        players.get(orientation).drawTile(tile);
+        tileLeft--;
+    }
+
+    public void discard(Orientation orientation) {
+        Tile discardedTile = players.get(orientation).discardAI();
+        players.get(orientation).discardTile(discardedTile);
+        discardedPiles.get(orientation).add(discardedTile);
+        repaint();
+    }
+
+    public void gang(Orientation orientation) {
     }
 
     private void distributeStartingTiles() {
@@ -60,91 +84,124 @@ public class Game extends JPanel {
         tileLeft = tileMountain.size();
     }
 
-    public String getPlayerHand(Orientation orientation) {
-        return players.get(orientation).toString();
+    public Hand getPlayerHand(Orientation orientation) {
+        return players.get(orientation);
     }
 
     public int getTileLeft() {
         return tileLeft;
     }
 
+    public boolean isFinish() {
+        return tileMountain.isEmpty();
+    }
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        try {
-            Graphics2D g2d = (Graphics2D) g;
-            BufferedImage front = loadImage(PIC_SRC + "Front.svg", 60, 80);
-            g.drawImage(front, 70, 30, 60, 80, null);
-            g.drawImage(front, 130, 30, 60, 80, null);
-            g.drawImage(front, 190, 30, 60, 80, null);
-            g.drawImage(front, 250, 30, 60, 80, null);
-            g.drawImage(front, 310, 30, 60, 80, null);
-            g.drawImage(front, 370, 30, 60, 80, null);
-            g.drawImage(front, 430, 30, 60, 80, null);
-            g.drawImage(front, 490, 30, 60, 80, null);
-            g.drawImage(front, 550, 30, 60, 80, null);
-            g.drawImage(front, 610, 30, 60, 80, null);
-            g.drawImage(front, 670, 30, 60, 80, null);
-            g.drawImage(front, 730, 30, 60, 80, null);
-            g.drawImage(front, 790, 30, 60, 80, null);
-            drawWest(g);
-            g2d.setColor(Color.LIGHT_GRAY);
-            g2d.setStroke(new BasicStroke(2f));
-            g2d.drawRoundRect(70, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(130, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(190, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(250, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(310, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(370, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(430, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(490, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(550, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(610, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(670, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(730, 30, 60, 80, 10, 10);
-            g2d.drawRoundRect(790, 30, 60, 80, 10, 10);
-        } catch (TranscoderException e) {
-            e.printStackTrace();
-        }
+        drawCenter(g);
+        drawWest(g);
+        drawEast(g);
+        drawNorth(g);
+        drawSouth(g);
     }
 
-    public BufferedImage loadImage(String svgFile, float width, float height) throws TranscoderException {
-        BufferedImageTranscoder imageTranscoder = new BufferedImageTranscoder();
-
-        imageTranscoder.addTranscodingHint(PNGTranscoder.KEY_WIDTH, width);
-        imageTranscoder.addTranscodingHint(PNGTranscoder.KEY_HEIGHT, height);
-
-        TranscoderInput input = new TranscoderInput(svgFile);
-        imageTranscoder.transcode(input, null);
-
-        return imageTranscoder.getBufferedImage();
+    private void drawCenter(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setColor(Color.GRAY);
+        g2d.setStroke(new BasicStroke(2f));
+        g2d.drawRect(23 * scale, 23 * scale, 18 * scale, 18 * scale);
+        g2d.drawRect(30 * scale, 23 * scale, 4 * scale, 4 * scale);
+        g2d.setColor(Color.BLACK);
+        g2d.setFont(new Font("DengXian", Font.PLAIN, 2 * scale));
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2d.drawString("" + tileLeft, 31 * scale, 25 * scale);
+//        g2d.drawRect(23 * scale, 23 * scale, 18 * scale, 18 * scale);
+//        g2d.drawRect(23 * scale, 23 * scale, 18 * scale, 18 * scale);
+//        g2d.drawRect(23 * scale, 23 * scale, 18 * scale, 18 * scale);
     }
 
-    public void drawWest(Graphics g) throws TranscoderException {
+    private void drawWest(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         int[] revealedHand = players.get(Orientation.WEST).getRevealedHand();
-        String fileName;
-        for (int i : revealedHand) {
-            if (revealedHand[i] == 3) {
-                fileName = Hand.positionToTile(i).toFileName();
-            } else if (revealedHand[i] == 4) {
-                fileName = Hand.positionToTile(i).toFileName();
+        int[] concealedHand = players.get(Orientation.WEST).getConcealedHand();
+        LinkedList<Tile> discardedPile = discardedPiles.get(Orientation.WEST);
+        String fileName; BufferedImage image;
+        int curX = 7 * scale, revealedCount = 0, y = 3 * scale;
+        for (int pos = 0; pos < revealedHand.length; pos++) {
+            if (revealedHand[pos] == 3) {
+                fileName = Hand.positionToTile(pos).toFileName();
+                image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
+                for (int i = 0; i < 3; i++) {
+                    drawTile(image, g2d, curX, y, false);
+                    curX += 3 * scale;
+                }
+                curX += 2 * scale;
+                revealedCount++;
+            } else if (revealedHand[pos] == 4) {
+                fileName = Hand.positionToTile(pos).toFileName();
+                image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
+                BufferedImage imageRotated = ImageProcessor.rotate(image);
+                drawTile(image, g2d, curX, y, false);
+                drawTile(imageRotated, g2d, curX + 3 * scale, y, true);
+                drawTile(imageRotated, g2d, curX + 3 * scale, y + 3 * scale, true);
+                curX += 7 * scale;
+                drawTile(image, g2d, curX, y, false);
+                curX += 2 * scale;
+                revealedCount++;
             }
         }
-        BufferedImage i = loadImage(PIC_SRC + "Man1.svg", 60, 80);
-        g2d.drawImage(i, 70, 30, 60, 80, null);
-        g2d.drawImage(i, 130, 30, 60, 80, null);
-        g2d.drawImage(i, 190, 30, 60, 80, null);
-        g2d.drawImage(i, 250, 30, 60, 80, null);
-        g2d.drawImage(i, 310, 30, 60, 80, null);
-        g2d.drawImage(i, 370, 30, 60, 80, null);
-        g2d.drawImage(i, 430, 30, 60, 80, null);
-        g2d.drawImage(i, 490, 30, 60, 80, null);
-        g2d.drawImage(i, 550, 30, 60, 80, null);
-        g2d.drawImage(i, 610, 30, 60, 80, null);
-        g2d.drawImage(i, 670, 30, 60, 80, null);
-        g2d.drawImage(i, 730, 30, 60, 80, null);
-        g2d.drawImage(i, 790, 30, 60, 80, null);
+        int tileLeft = 13 - 3 * revealedCount;
+        curX = 53 * scale  - 3 * scale * tileLeft;
+        for (int pos = 0; pos < concealedHand.length; pos++) {
+            int numTiles = concealedHand[pos];
+            if (numTiles > 0) {
+                fileName = Hand.positionToTile(pos).toFileName();
+                image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
+                for (int i = 0; i < numTiles; i++) {
+                    drawTile(image, g2d, curX, y, false);
+                    curX += 3 * scale;
+                }
+            }
+        }
+        int discardedCount = 0;
+        curX = 41 * scale;
+        y = 19 * scale;
+        for (Tile tile : discardedPile) {
+            if (discardedCount == 6) {
+                curX = 41 * scale;
+                y = 15 * scale;
+            } else if (discardedCount == 12) {
+                curX = 41 * scale;
+                y = 11 * scale;
+            }
+            curX -= 3 * scale;
+            fileName = tile.toFileName();
+            image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
+            drawTile(image, g2d, curX, y, false);
+            discardedCount++;
+        }
     }
 
+    private void drawEast(Graphics g) {}
+
+    private void drawNorth(Graphics g) {}
+
+    private void drawSouth(Graphics g) {}
+
+    private void drawTile(BufferedImage image, Graphics2D g2d, int X, int Y, boolean sideway) {
+        if (!sideway) {
+            g2d.drawImage(FRONT, X, Y, 3 * scale, 4 * scale, null);
+            g2d.drawImage(image, X, Y, 3 * scale, 4 * scale, null);
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRoundRect(X, Y, 3 * scale, 4 * scale, scale / 2, scale / 2);
+        } else {
+            g2d.drawImage(FRONT, X, Y, 4 * scale, 3 * scale, null);
+            g2d.drawImage(image, X, Y, 4 * scale, 3 * scale, null);
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRoundRect(X, Y, 4 * scale, 3 * scale, scale / 2, scale / 2);
+        }
+    }
 }

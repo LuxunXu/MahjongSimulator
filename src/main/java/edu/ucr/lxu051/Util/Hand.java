@@ -38,12 +38,12 @@ public class Hand {
     }
 
     public void drawTile(int position) {
-        this.concealedHand[position]++;
+        concealedHand[position]++;
     }
 
     public boolean canDiscardTile(Tile tile) {
         int i = tileToPosition(tile);
-        return this.concealedHand[i] > 0;
+        return concealedHand[i] > 0;
     }
 
     public void discardTile(Tile tile) {
@@ -56,31 +56,51 @@ public class Hand {
 
     public boolean canPeng(Tile tile) {
         int i = tileToPosition(tile);
-        return this.concealedHand[i] == 2 || this.concealedHand[i] == 3;
+        return concealedHand[i] == 2 || concealedHand[i] == 3;
     }
 
     public void peng(Tile tile) {
         int i = tileToPosition(tile);
-        this.concealedHand[i] -= 2;
-        this.revealedHand[i] = 3;
+        concealedHand[i] -= 2;
+        revealedHand[i] = 3;
     }
 
-    public boolean canGang(Tile tile) {
+    public int canGang(Tile tile) {
         int i = tileToPosition(tile);
-        return this.concealedHand[i] == 3;
+        if (concealedHand[i] == 4) {
+            return 1; // canGangConcealed
+        } else if (concealedHand[i] == 3) {
+            return 2; // canGangRevealed
+        } else if (revealedHand[i] == 3 && concealedHand[i] == 1) {
+            return 3; // canGangAttatched
+        } else {
+            return 0;
+        }
     }
 
-    public void gang(Tile tile) {
+    public void gangConcealed(Tile tile) {
         int i = tileToPosition(tile);
-        this.concealedHand[i] -= 3;
-        this.revealedHand[i] = 4;
+        concealedHand[i] -= 4;
+        revealedHand[i] = 4;
+    }
+
+    public void gangRevealed(Tile tile) {
+        int i = tileToPosition(tile);
+        concealedHand[i] -= 3;
+        revealedHand[i] = 4;
+    }
+
+    public void gangAttached(Tile tile) {
+        int i = tileToPosition(tile);
+        concealedHand[i] -= 1;
+        revealedHand[i] = 4;
     }
 
     public Set<Tile> isReady() throws IOException {
         Set<Tile> readySet = new LinkedHashSet<>();
         for (int i = 0; i < 27; i++) {
 //            System.out.println(i);
-            int[] handCopy = Arrays.copyOf(this.concealedHand, 27);
+            int[] handCopy = Arrays.copyOf(concealedHand, 27);
             if (isReadyHelper(handCopy, i)) {
                 readySet.add(positionToTile(i));
             }
@@ -199,5 +219,16 @@ public class Hand {
                 return index + 18;
         }
         return -1;
+    }
+
+    public Tile discardAI() {
+        // now randomly choose one
+        Random rnd = new Random();
+        while (true) {
+            int i = rnd.nextInt(27);
+            if (concealedHand[i] > 0) {
+                return positionToTile(i);
+            }
+        }
     }
 }
