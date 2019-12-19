@@ -6,15 +6,18 @@ import java.util.*;
 public class Hand {
     private int[] concealedHand; //Bing 0-8, Tiao 9-17, Wan 18-26
     private int[] revealedHand;
+    private Simple giveUpSimple;
     private Orientation orientation;
+    private boolean finished;
 
-    public Hand(String orientation) {
-        this.concealedHand = new int[27];
-        this.revealedHand = new int[27];
-        this.orientation = Orientation.valueOf(orientation);
+    public Hand(Orientation orientation) {
+        concealedHand = new int[27];
+        revealedHand = new int[27];
+        this.orientation = orientation;
+        finished = false;
     }
 
-    public void initHand(ArrayList<Tile> handList) { // list should be 13 long
+    public void initHand(LinkedList<Tile> handList) { // list should be 13 long
         if (handList.size() != 13) {
             throw new IllegalArgumentException("Initialization should be 13 tiles.");
         }
@@ -24,7 +27,7 @@ public class Hand {
     }
 
     public void initHand(String handString) {
-        ArrayList<Tile> list = new ArrayList<>();
+        LinkedList<Tile> list = new LinkedList<>();
         String[] tileTokens = handString.split("\\s");
         for (String tileToken : tileTokens) {
             list.add(new Tile(tileToken));
@@ -37,7 +40,12 @@ public class Hand {
     }
 
     public void drawTile(int position) {
-        this.concealedHand[position]++;
+        concealedHand[position]++;
+    }
+
+    public boolean canDiscardTile(Tile tile) {
+        int i = tileToPosition(tile);
+        return concealedHand[i] > 0;
     }
 
     public void discardTile(Tile tile) {
@@ -48,15 +56,53 @@ public class Hand {
         this.concealedHand[position]--;
     }
 
-    public void canPeng() {
+    public boolean canPeng(Tile tile) {
+        int i = tileToPosition(tile);
+        return concealedHand[i] == 2 || concealedHand[i] == 3;
+    }
 
+    public void peng(Tile tile) {
+        int i = tileToPosition(tile);
+        concealedHand[i] -= 2;
+        revealedHand[i] = 3;
+    }
+
+    public int canGang(Tile tile) {
+        int i = tileToPosition(tile);
+        if (concealedHand[i] == 4) {
+            return 1; // canGangConcealed
+        } else if (concealedHand[i] == 3) {
+            return 2; // canGangRevealed
+        } else if (revealedHand[i] == 3 && concealedHand[i] == 1) {
+            return 3; // canGangAttatched
+        } else {
+            return 0;
+        }
+    }
+
+    public void gangConcealed(Tile tile) {
+        int i = tileToPosition(tile);
+        concealedHand[i] -= 4;
+        revealedHand[i] = 4;
+    }
+
+    public void gangRevealed(Tile tile) {
+        int i = tileToPosition(tile);
+        concealedHand[i] -= 3;
+        revealedHand[i] = 4;
+    }
+
+    public void gangAttached(Tile tile) {
+        int i = tileToPosition(tile);
+        concealedHand[i] -= 1;
+        revealedHand[i] = 4;
     }
 
     public Set<Tile> isReady() throws IOException {
         Set<Tile> readySet = new LinkedHashSet<>();
         for (int i = 0; i < 27; i++) {
 //            System.out.println(i);
-            int[] handCopy = Arrays.copyOf(this.concealedHand, 27);
+            int[] handCopy = Arrays.copyOf(concealedHand, 27);
             if (isReadyHelper(handCopy, i)) {
                 readySet.add(positionToTile(i));
             }
@@ -97,7 +143,7 @@ public class Hand {
         }
         for (String testSplit : testSplits) {
             HandUtil handUtil = new HandUtil(testSplit);
-            if (handUtil.reduce() == false) {
+            if (!handUtil.reduce()) {
                 return false;
             }
         }
@@ -116,7 +162,44 @@ public class Hand {
         return count == 7;
     }
 
-    private Tile positionToTile(int i) {
+    public int[] getConcealedHand() {
+        return concealedHand;
+    }
+
+    public int[] getRevealedHand() {
+        return revealedHand;
+    }
+
+    public Simple getGiveUpSimple() {
+        return giveUpSimple;
+    }
+
+    public Orientation getOrientation() {
+        return orientation;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(orientation).append(":\t");
+        for (int i = 0; i < 27; i++) {
+            for (int j = 0; j < this.concealedHand[i]; j++) {
+                sb.append(positionToTile(i));
+            }
+        }
+        sb.append(" ");
+        for (int i = 0; i < 27; i++) {
+            if (this.revealedHand[i] > 0) {
+                for (int j = 0; j < this.revealedHand[i]; j++) {
+                    sb.append(positionToTile(i));
+                }
+                sb.append(" ");
+            }
+        }
+        return sb.toString();
+    }
+
+    public static Tile positionToTile(int i) {
         int number = i % 9 + 1;
         if (i < 9) {
             return new Tile(Simple.B, number);
@@ -127,7 +210,7 @@ public class Hand {
         }
     }
 
-    private int tileToPosition(Tile tile) {
+    public static int tileToPosition(Tile tile) {
         int index = tile.getNumber() - 1;
         switch (tile.getSimple()) {
             case B:
@@ -140,22 +223,14 @@ public class Hand {
         return -1;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(orientation + ":\t");
-        for (int i = 0; i < 27; i++) {
-            for (int j = 0; j < this.concealedHand[i]; j++) {
-                sb.append(positionToTile(i));
+    public Tile discardAI() {
+        // now randomly choose one
+        Random rnd = new Random();
+        while (true) {
+            int i = rnd.nextInt(27);
+            if (concealedHand[i] > 0) {
+                return positionToTile(i);
             }
         }
-        sb.append(" ");
-        for (int i = 0; i < 27; i++) {
-            for (int j = 0; j < this.revealedHand[i]; j++) {
-                sb.append(positionToTile(i));
-            }
-            sb.append(" ");
-        }
-        return sb.toString();
     }
 }

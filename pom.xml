@@ -31,7 +31,16 @@
           <version>RELEASE</version>
           <scope>compile</scope>
       </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-transcoder -->
+    <dependency>
+        <groupId>org.apache.xmlgraphics</groupId>
+        <artifactId>batik-transcoder</artifactId>
+        <version>1.12</version>
+    </dependency>
+
   </dependencies>
+
 
   <build>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
