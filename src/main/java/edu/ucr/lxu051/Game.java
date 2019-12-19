@@ -16,6 +16,7 @@ public class Game extends JPanel {
     private Map<Orientation, LinkedList<Tile>> discardedPiles;
     private int tileLeft;
     private Map<Orientation, Hand> players;
+    private int numOfPlayersWon;
     private long seed;
     private BufferedImage FRONT;
     private Orientation whosTurn;
@@ -34,6 +35,7 @@ public class Game extends JPanel {
         tileMountain = new LinkedList<>();
         discardedPiles = new HashMap<>();
         players = new HashMap<>();
+        numOfPlayersWon = 0;
         genMountain();
         Random rnd = new Random();
         if (seed > 0) {
@@ -104,7 +106,7 @@ public class Game extends JPanel {
     }
 
     public boolean isFinish() {
-        return tileMountain.isEmpty();
+        return tileMountain.isEmpty() || numOfPlayersWon == 3;
     }
 
     @Override
@@ -114,7 +116,6 @@ public class Game extends JPanel {
         if (whosTurn == null) {
             return;
         }
-        g.drawString("" + String.format("%02d", tileLeft), 31 * scale, 32 * scale);
         drawWest(g);
         drawEast(g);
         drawNorth(g);
@@ -138,6 +139,7 @@ public class Game extends JPanel {
         g2d.drawString("北", 24 * scale, 32 * scale);
         g2d.drawString("南", 38 * scale, 32 * scale);
         g2d.drawString("东", 31 * scale, 39 * scale);
+        g2d.drawString("" + String.format("%02d", tileLeft), 31 * scale, 32 * scale);
     }
 
     private void drawWest(Graphics g) {
