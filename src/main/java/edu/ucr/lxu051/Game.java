@@ -9,7 +9,7 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 
 public class Game extends JPanel {
-    private int scale = 20;
+    private int scale;
     private final String PIC_SRC = "src/main/resources/Pic/Regular/";
     private final String PIC_FORMAT = ".svg";
     private LinkedList<Tile> tileMountain;
@@ -17,7 +17,7 @@ public class Game extends JPanel {
     private int tileLeft;
     private Map<Orientation, Hand> players;
     private long seed;
-    private final BufferedImage FRONT = ImageProcessor.loadImage(PIC_SRC + "Front" + PIC_FORMAT, 3 * scale, 4 * scale);
+    private BufferedImage FRONT;
     private Orientation whosTurn;
 
     public Game(int scale) {
@@ -25,14 +25,15 @@ public class Game extends JPanel {
     }
 
     public Game(int scale, long seed) {
-        tileMountain = new LinkedList<>();
-        discardedPiles = new HashMap<>();
-        players = new HashMap<>();
         this.seed = seed;
         this.scale = scale;
+        FRONT = ImageProcessor.loadImage(PIC_SRC + "Front" + PIC_FORMAT, 3 * scale, 4 * scale);
     }
 
     public void initGame() {
+        tileMountain = new LinkedList<>();
+        discardedPiles = new HashMap<>();
+        players = new HashMap<>();
         genMountain();
         Random rnd = new Random();
         if (seed > 0) {
@@ -110,6 +111,10 @@ public class Game extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         drawCenter(g);
+        if (whosTurn == null) {
+            return;
+        }
+        g.drawString("" + String.format("%02d", tileLeft), 31 * scale, 32 * scale);
         drawWest(g);
         drawEast(g);
         drawNorth(g);
@@ -133,7 +138,6 @@ public class Game extends JPanel {
         g2d.drawString("北", 24 * scale, 32 * scale);
         g2d.drawString("南", 38 * scale, 32 * scale);
         g2d.drawString("东", 31 * scale, 39 * scale);
-        g2d.drawString("" + String.format("%02d", tileLeft), 31 * scale, 32 * scale);
     }
 
     private void drawWest(Graphics g) {

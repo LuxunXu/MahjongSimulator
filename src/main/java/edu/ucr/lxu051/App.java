@@ -49,8 +49,17 @@ public class App extends JFrame {
 
         JPanel controlPanel = new JPanel();
         controlPanel.setSize(64 * SCALE, 4 * SCALE);
-        JButton jButton = new JButton("Go");
-        jButton.addActionListener(new ActionListener() {
+        JButton newGameButton = new JButton("New Game");
+        newGameButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+//                game = new Game(SCALE);
+                game.initGame();
+//                game.setSize(64 * SCALE, 64 * SCALE);
+            }
+        });
+        JButton goButton = new JButton("Go");
+        goButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Orientation whosTurn = game.getWhosTurn();
@@ -67,18 +76,12 @@ public class App extends JFrame {
                 }
             }
         });
-        controlPanel.add(jButton);
+        controlPanel.add(newGameButton);
+        controlPanel.add(goButton);
 
-        game = new Game(SCALE, 576456);
-        game.initGame();
+        game = new Game(SCALE);
+//        game.initGame();
         game.setSize(64 * SCALE, 64 * SCALE);
-
-//        game.getPlayerHand(Orientation.SOUTH).gangConcealed(new Tile(Simple.B, 2));
-//        game.getPlayerHand(Orientation.SOUTH).peng(new Tile(Simple.T, 1));
-//        game.getPlayerHand(Orientation.SOUTH).discardTile(new Tile(Simple.B, 1));
-//        game.getPlayerHand(Orientation.NORTH).gangConcealed(new Tile(Simple.W, 3));
-//        game.getPlayerHand(Orientation.NORTH).peng(new Tile(Simple.T, 1));
-//        game.getPlayerHand(Orientation.NORTH).discardTile(new Tile(Simple.W, 1));
 
         contentPane.add(game, BorderLayout.CENTER);
         contentPane.add(controlPanel, BorderLayout.SOUTH);
