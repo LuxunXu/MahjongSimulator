@@ -6,7 +6,7 @@ import java.util.*;
 public class Hand {
     private int[] concealedHand; //Bing 0-8, Tiao 9-17, Wan 18-26
     private int[] revealedHand;
-    private Simple giveUpSimple;
+    private Simple forfeitedSimple;
     private Orientation orientation;
     private boolean finished;
 
@@ -170,8 +170,8 @@ public class Hand {
         return revealedHand;
     }
 
-    public Simple getGiveUpSimple() {
-        return giveUpSimple;
+    public Simple getForfeitedSimple() {
+        return forfeitedSimple;
     }
 
     public Orientation getOrientation() {
@@ -233,4 +233,6 @@ public class Hand {
             }
         }
     }
+
+
 }

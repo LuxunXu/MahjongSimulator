@@ -109,6 +109,12 @@ public class Game extends JPanel {
         return tileMountain.isEmpty() || numOfPlayersWon == 3;
     }
 
+    public void autoExecute() {
+        while (!isFinish()) {
+            offer(whosTurn);
+        }
+    }
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -139,7 +145,9 @@ public class Game extends JPanel {
         g2d.drawString("北", 24 * scale, 32 * scale);
         g2d.drawString("南", 38 * scale, 32 * scale);
         g2d.drawString("东", 31 * scale, 39 * scale);
-        g2d.drawString("" + String.format("%02d", tileLeft), 31 * scale, 32 * scale);
+        if (whosTurn != null) {
+            g2d.drawString("" + String.format("%02d", tileLeft), 31 * scale, 32 * scale);
+        }
     }
 
     private void drawWest(Graphics g) {
