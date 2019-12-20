@@ -110,8 +110,9 @@ public class Game extends JPanel {
     }
 
     public void autoExecute() {
-        while (!isFinish()) {
-            offer(whosTurn);
+        offer(whosTurn);
+        while (isFinish()) {
+            int decision = players.get(whosTurn).decideAction();
         }
     }
 

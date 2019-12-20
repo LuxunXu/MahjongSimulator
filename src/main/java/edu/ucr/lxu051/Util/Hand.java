@@ -98,23 +98,15 @@ public class Hand {
         revealedHand[i] = 4;
     }
 
-    public Set<Tile> isReady() throws IOException {
-        Set<Tile> readySet = new LinkedHashSet<>();
-        for (int i = 0; i < 27; i++) {
-//            System.out.println(i);
-            int[] handCopy = Arrays.copyOf(concealedHand, 27);
-            if (isReadyHelper(handCopy, i)) {
-                readySet.add(positionToTile(i));
-            }
-        }
-        return readySet;
+    public void hu() {
+        finished = true;
     }
 
-    private boolean isReadyHelper(int[] curHand, int i) throws IOException {
-        curHand[i]++;
-        if (curHand[i] > 4) {
-            return false;
-        }
+    public boolean canHu() throws IOException {
+        return canHuHelper(concealedHand);
+    }
+
+    private boolean canHuHelper(int[] curHand) throws IOException {
         boolean isSevenPairs = isSevenPairs(curHand);
         if (isSevenPairs) {
             return true;
@@ -148,6 +140,26 @@ public class Hand {
             }
         }
         return true;
+    }
+
+    public Set<Tile> isReady() throws IOException {
+        Set<Tile> readySet = new LinkedHashSet<>();
+        for (int i = 0; i < 27; i++) {
+//            System.out.println(i);
+            int[] handCopy = Arrays.copyOf(concealedHand, 27);
+            if (isReadyHelper(handCopy, i)) {
+                readySet.add(positionToTile(i));
+            }
+        }
+        return readySet;
+    }
+
+    private boolean isReadyHelper(int[] curHand, int i) throws IOException {
+        curHand[i]++;
+        if (curHand[i] > 4) {
+            return false;
+        }
+        return canHuHelper(curHand);
     }
 
     private boolean isSevenPairs(int[] curHand) {
@@ -234,5 +246,7 @@ public class Hand {
         }
     }
 
-
+    public int decideAction() {
+        return 0;
+    }
 }
