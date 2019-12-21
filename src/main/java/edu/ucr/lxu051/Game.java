@@ -58,9 +58,9 @@ public class Game extends JPanel {
     }
 
     public void discard(Orientation orientation) {
-        Tile discardedTile = players.get(orientation).discardAI();
+        int discardedTile = players.get(orientation).discardAI();
         players.get(orientation).discardTile(discardedTile);
-        discardedPiles.get(orientation).add(discardedTile);
+        discardedPiles.get(orientation).add(Tool.positionToTile(discardedTile));
         repaint();
     }
 
@@ -160,7 +160,7 @@ public class Game extends JPanel {
         int x = 7 * scale, revealedCount = 0, y = 3 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 for (int i = 0; i < 3; i++) {
                     drawTile(image, g2d, x, y, false);
@@ -169,7 +169,7 @@ public class Game extends JPanel {
                 x += 2 * scale;
                 revealedCount++;
             } else if (revealedHand[pos] == 4) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 BufferedImage imageRotated = ImageProcessor.rotate(image, false);
                 drawTile(image, g2d, x, y, false);
@@ -186,7 +186,7 @@ public class Game extends JPanel {
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 for (int i = 0; i < numTiles; i++) {
                     drawTile(image, g2d, x, y, false);
@@ -224,7 +224,7 @@ public class Game extends JPanel {
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 for (int i = 0; i < numTiles; i++) {
                     drawTile(image, g2d, x, y, false);
@@ -236,7 +236,7 @@ public class Game extends JPanel {
         x = 54 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 for (int i = 0; i < 3; i++) {
                     drawTile(image, g2d, x, y, false);
@@ -244,7 +244,7 @@ public class Game extends JPanel {
                 }
                 x -= 2 * scale;
             } else if (revealedHand[pos] == 4) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 BufferedImage imageRotated = ImageProcessor.rotate(image, false);
                 drawTile(image, g2d, x, y, false);
@@ -286,7 +286,7 @@ public class Game extends JPanel {
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, true);
                 for (int i = 0; i < numTiles; i++) {
@@ -299,7 +299,7 @@ public class Game extends JPanel {
         y = 54 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, true);
                 for (int i = 0; i < 3; i++) {
@@ -308,7 +308,7 @@ public class Game extends JPanel {
                 }
                 y -= 2 * scale;
             } else if (revealedHand[pos] == 4) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, true);
                 drawTile(imageRotated, g2d, x, y, true);
@@ -350,7 +350,7 @@ public class Game extends JPanel {
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, false);
                 for (int i = 0; i < numTiles; i++) {
@@ -363,7 +363,7 @@ public class Game extends JPanel {
         y = 10 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, false);
                 for (int i = 0; i < 3; i++) {
@@ -372,7 +372,7 @@ public class Game extends JPanel {
                 }
                 y += 2 * scale;
             } else if (revealedHand[pos] == 4) {
-                fileName = Hand.positionToTile(pos).toFileName();
+                fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, false);
                 drawTile(imageRotated, g2d, x, y, true);
