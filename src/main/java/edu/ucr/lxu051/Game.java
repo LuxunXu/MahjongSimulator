@@ -6,6 +6,7 @@ import edu.ucr.lxu051.Util.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.*;
 
 public class Game extends JPanel {
@@ -15,11 +16,11 @@ public class Game extends JPanel {
     private LinkedList<Tile> tileMountain;
     private Map<Orientation, LinkedList<Tile>> discardedPiles;
     private int tileLeft;
-    private Map<Orientation, Hand> players;
-    private int numOfPlayersWon;
+    private Map<Orientation, Player> players;
     private long seed;
     private BufferedImage FRONT;
     private Orientation whosTurn;
+    private LinkedList<Orientation> playersLeft;
 
     public Game(int scale) {
         this(scale, 0);
@@ -29,13 +30,13 @@ public class Game extends JPanel {
         this.seed = seed;
         this.scale = scale;
         FRONT = ImageProcessor.loadImage(PIC_SRC + "Front" + PIC_FORMAT, 3 * scale, 4 * scale);
+        playersLeft = new LinkedList<>();
     }
 
     public void initGame() {
         tileMountain = new LinkedList<>();
         discardedPiles = new HashMap<>();
         players = new HashMap<>();
-        numOfPlayersWon = 0;
         genMountain();
         Random rnd = new Random();
         if (seed > 0) {
@@ -43,11 +44,12 @@ public class Game extends JPanel {
         }
         Collections.shuffle(tileMountain, rnd);
         for (Orientation orientation : Orientation.values()) {
-            players.put(orientation, new Hand(orientation));
+            players.put(orientation, new Player(orientation));
             discardedPiles.put(orientation, new LinkedList<>());
         }
         distributeStartingTiles();
         whosTurn = Orientation.EAST;
+        playersLeft.addAll(Arrays.asList(Orientation.values()));
         repaint();
     }
 
@@ -106,14 +108,25 @@ public class Game extends JPanel {
     }
 
     public boolean isFinish() {
-        return tileMountain.isEmpty() || numOfPlayersWon == 3;
+        return tileMountain.isEmpty() || playersLeft.size() == 1;
     }
 
-    public void autoExecute() {
+    public void autoExecute() throws IOException {
         offer(whosTurn);
         while (isFinish()) {
             int decision = players.get(whosTurn).decideAction();
+            if (decision == 200) {
+                playersLeft.remove(whosTurn);
+            }
         }
+    }
+    
+    public Orientation getNextTurn() {
+        int i = playersLeft.indexOf(whosTurn);
+        if (i == playersLeft.size() - 1) {
+            return playersLeft.get(0);
+        }
+        return playersLeft.get(i + 1);
     }
 
     @Override

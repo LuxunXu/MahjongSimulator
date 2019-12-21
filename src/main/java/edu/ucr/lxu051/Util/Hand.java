@@ -79,8 +79,8 @@ public class Hand {
     }
     */
 
-    public Set<Integer> canGangConcelaed() {
-        Set<Integer> candidates = new HashSet<>();
+    public LinkedList<Integer> canGangConcelaed() {
+        LinkedList<Integer> candidates = new LinkedList<>();
         for (int i = 0; i < 27; i++) {
             if (concealedHand[i] == 4) {
                 candidates.add(i);
@@ -103,10 +103,12 @@ public class Hand {
         revealedHand[i] = 4;
     }
 
-    public Set<Integer> canGangAttached(int i) {
-        Set<Integer> candidates = new HashSet<>();
-        if (revealedHand[i] == 3 && concealedHand[i] == 1) {
-            candidates.add(i);
+    public LinkedList<Integer> canGangAttached() {
+        LinkedList<Integer> candidates = new LinkedList<>();
+        for (int i = 0; i < 27; i++) {
+            if (revealedHand[i] == 3 && concealedHand[i] == 1) {
+                candidates.add(i);
+            }
         }
         return candidates;
     }
@@ -207,6 +209,8 @@ public class Hand {
         return orientation;
     }
 
+
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -226,21 +230,5 @@ public class Hand {
             }
         }
         return sb.toString();
-    }
-
-    public int discardAI() {
-        // now randomly choose one
-        Random rnd = new Random();
-        while (true) {
-            int i = rnd.nextInt(27);
-            if (concealedHand[i] > 0) {
-                return i;
-            }
-        }
-    }
-
-    public int decideAction() { // int = 27 means gang
-
-        return 0;
     }
 }
