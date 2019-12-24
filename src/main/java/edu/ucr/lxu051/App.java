@@ -1,5 +1,6 @@
 package edu.ucr.lxu051;
 
+import edu.ucr.lxu051.Util.Hand;
 import edu.ucr.lxu051.Util.Orientation;
 import edu.ucr.lxu051.Util.Simple;
 import edu.ucr.lxu051.Util.Tile;
@@ -8,22 +9,27 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class App extends JFrame {
 
-    private final int SCALE = 15;
+    private final int SCALE = 13;
     private Game game;
     private JPanel contentPane;
 
-    public static void main( String[] args ) {
+    public static void main( String[] args ) throws IOException {
 
-//        Hand hand2 = new Hand("WEST");
-//        hand2.initHand("5W 5W 5W 6W 7W 7W 7W 8B 9B 7B 3T 4T 2T");
+//        Hand hand2 = new Hand(Orientation.WEST);
+//        hand2.initHand("1B 3B 3B 8B 8B 1W 1W");
 //        System.out.println(hand2);
 //        System.out.println(hand2.isReady());
 
 //        HandUtil handUtil = new HandUtil("1133");
 //        System.out.println(handUtil.reduce());
+
+//        Game testGame = new Game(13, 5);
+//        testGame.initGame();
+//        testGame.autoExecute();
 
         EventQueue.invokeLater(new Runnable() {
             @Override
@@ -41,7 +47,6 @@ public class App extends JFrame {
     public App() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(0, 0, 64 * SCALE, 68 * SCALE);
-//        setSize(64 * SCALE, 64 * SCALE);
         contentPane = new JPanel();
         contentPane.setLayout(new BorderLayout());
         setContentPane(contentPane);
@@ -53,26 +58,17 @@ public class App extends JFrame {
         newGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-//                game = new Game(SCALE);
                 game.initGame();
-//                game.setSize(64 * SCALE, 64 * SCALE);
             }
         });
         JButton goButton = new JButton("Go");
         goButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Orientation whosTurn = game.getWhosTurn();
-                game.offer(whosTurn);
-                game.discard(whosTurn);
-                if (whosTurn.equals(Orientation.EAST)) {
-                    game.setWhosTurn(Orientation.SOUTH);
-                } else if (whosTurn.equals(Orientation.SOUTH)) {
-                    game.setWhosTurn(Orientation.WEST);
-                } else if (whosTurn.equals(Orientation.WEST)) {
-                    game.setWhosTurn(Orientation.NORTH);
-                } else {
-                    game.setWhosTurn(Orientation.EAST);
+                try {
+                    game.autoExecute();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
                 }
             }
         });
@@ -80,7 +76,6 @@ public class App extends JFrame {
         controlPanel.add(goButton);
 
         game = new Game(SCALE);
-//        game.initGame();
         game.setSize(64 * SCALE, 64 * SCALE);
 
         contentPane.add(game, BorderLayout.CENTER);

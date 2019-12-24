@@ -9,9 +9,51 @@ public class Player extends Hand {
         super(orientation);
     }
 
+    public void decideForfeitedSimple() {
+        int[] curHand = getConcealedHand();
+        int[] simpleCount = new int[3];
+        for (int i = 0; i < 27; i++) {
+            simpleCount[i / 9] += curHand[i];
+        }
+        int min = Integer.MAX_VALUE;
+        int minSimple = 0;
+        for (int i = 0; i < 3; i++) {
+            if (simpleCount[i] == 0) {
+                setForfeitedSimple(Tool.indexToSimple(i));
+                return;
+            }
+            if (simpleCount[i] < min) {
+                min = simpleCount[i];
+                minSimple = i;
+            }
+        }
+        setForfeitedSimple(Tool.indexToSimple(minSimple));
+    }
+
     public int discardAI() {
-        // now randomly choose one
         Random rnd = new Random();
+//        rnd.setSeed(1);
+
+        // First discard forfeited simple
+        int forfeitedSimpleIndex = Tool.simpleToIndex(getForfeitedSimple());
+        for (int i = 9 * forfeitedSimpleIndex; i < 9 * forfeitedSimpleIndex + 9; i++) {
+            if (getConcealedHand()[i] > 0) {
+                return i;
+            }
+        }
+
+
+        // some AI
+        int tryTime = 0;
+        while (tryTime < 50) {
+            int i = rnd.nextInt(27);
+            if (getConcealedHand()[i] == 1) {
+                return i;
+            }
+            tryTime++;
+        }
+
+        // now randomly choose one
         while (true) {
             int i = rnd.nextInt(27);
             if (getConcealedHand()[i] > 0) {
@@ -22,7 +64,9 @@ public class Player extends Hand {
 
     public int decideAction() throws IOException { // int = 27 means gang
         if (canHu()) {
+            System.out.println(getOrientation() + " declared ZiMo.");
             hu();
+            System.out.println(toString());
             return 200;
         }
         LinkedList<Integer> canGangConcealedSet = canGangConcelaed();
@@ -34,9 +78,28 @@ public class Player extends Hand {
         LinkedList<Integer> canGangAttachedSet = canGangAttached();
         if (!canGangAttachedSet.isEmpty()) {
             int i = canGangAttachedSet.getFirst();
-            gangAttached(i);
-            return 300;
+            return 400 + i;
         }
         return discardAI();
+    }
+
+    public int decideActionLastRound() throws IOException { // int = 27 means gang
+        if (canHu()) {
+            hu();
+            return 200;
+        }
+        return discardAI();
+    }
+
+    public boolean wantHu(int i) {
+        return true;
+    }
+
+    public boolean wantPeng(int i) {
+        return true;
+    }
+
+    public boolean wantGang(int i) {
+        return true;
     }
 }

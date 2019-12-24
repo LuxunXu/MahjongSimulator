@@ -26,4 +26,30 @@ public class Tool {
         return -1;
     }
 
+    public static Simple indexToSimple(int i) {
+        if (i == 0) {
+            return Simple.B;
+        }
+        if (i == 1) {
+            return Simple.T;
+        }
+        if (i == 2) {
+            return Simple.W;
+        }
+        return null;
+    }
+
+    public static int simpleToIndex(Simple simple) {
+        if (simple.equals(Simple.B)) {
+            return 0;
+        }
+        if (simple.equals(Simple.T)) {
+            return 1;
+        }
+        if (simple.equals(Simple.W)) {
+            return 2;
+        }
+        return -1;
+    }
+
 }

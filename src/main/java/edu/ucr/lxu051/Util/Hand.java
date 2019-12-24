@@ -17,10 +17,7 @@ public class Hand {
         finished = false;
     }
 
-    public void initHand(LinkedList<Tile> handList) { // list should be 13 long
-        if (handList.size() != 13) {
-            throw new IllegalArgumentException("Initialization should be 13 tiles.");
-        }
+    public void initHand(LinkedList<Tile> handList) {
         for (Tile tile : handList) {
             concealedHand[Tool.tileToPosition(tile)]++;
         }
@@ -56,6 +53,13 @@ public class Hand {
     }
 
     public boolean canPeng(int i) {
+//        for (int j = 0; j < 27; j++) {
+//            System.out.print(concealedHand[j] + " ");
+//        }
+//        System.out.println();
+        if (getForfeitedSimple().equals(Tool.indexToSimple(i / 9))) {
+            return false;
+        }
         return concealedHand[i] == 2 || concealedHand[i] == 3;
     }
 
@@ -64,25 +68,11 @@ public class Hand {
         revealedHand[i] = 3;
     }
 
-    /* Need redo
-    public int canGang(Tile tile) {
-        int i = Tool.tileToPosition(tile);
-        if (concealedHand[i] == 4) {
-            return 1; // canGangConcealed
-        } else if (concealedHand[i] == 3) {
-            return 2; // canGangRevealed
-        } else if (revealedHand[i] == 3 && concealedHand[i] == 1) {
-            return 3; // canGangAttatched
-        } else {
-            return 0;
-        }
-    }
-    */
-
     public LinkedList<Integer> canGangConcelaed() {
+        int forfeitedSimpleIndex = Tool.simpleToIndex(getForfeitedSimple());
         LinkedList<Integer> candidates = new LinkedList<>();
         for (int i = 0; i < 27; i++) {
-            if (concealedHand[i] == 4) {
+            if (concealedHand[i] == 4 && forfeitedSimpleIndex != i / 9) {
                 candidates.add(i);
             }
         }
@@ -90,23 +80,29 @@ public class Hand {
     }
 
     public void gangConcealed(int i) {
+        System.out.println(getOrientation() + " AnGang " + Tool.positionToTile(i).toString());
         concealedHand[i] -= 4;
         revealedHand[i] = 4;
     }
 
     public boolean canGangRevealed(int i) {
+        if (getForfeitedSimple().equals(Tool.indexToSimple(i / 9))) {
+            return false;
+        }
         return concealedHand[i] == 3;
     }
 
     public void gangRevealed(int i) {
+        System.out.println(getOrientation() + " mingGang " + Tool.positionToTile(i).toString());
         concealedHand[i] -= 3;
         revealedHand[i] = 4;
     }
 
     public LinkedList<Integer> canGangAttached() {
+        int forfeitedSimpleIndex = Tool.simpleToIndex(getForfeitedSimple());
         LinkedList<Integer> candidates = new LinkedList<>();
         for (int i = 0; i < 27; i++) {
-            if (revealedHand[i] == 3 && concealedHand[i] == 1) {
+            if (revealedHand[i] == 3 && concealedHand[i] == 1 && forfeitedSimpleIndex != i / 9) {
                 candidates.add(i);
             }
         }
@@ -114,6 +110,7 @@ public class Hand {
     }
 
     public void gangAttached(int i) {
+        System.out.println(getOrientation() + " jiaGang " + Tool.positionToTile(i).toString());
         concealedHand[i] -= 1;
         revealedHand[i] = 4;
     }
@@ -133,6 +130,7 @@ public class Hand {
         }
         ArrayList<String> testSplits = new ArrayList<>();
         String split = "";
+        boolean allSplitsAre2 = true;
         for (int j = 0; j < 27; j++) {
             if (curHand[j] == 0) {
                 if (!split.isEmpty()) {
@@ -142,6 +140,9 @@ public class Hand {
             } else {
                 if (j % 9 == 0) {
                     if (!split.isEmpty()) {
+                        if (!split.equals("2")) {
+                            allSplitsAre2 = false;
+                        }
                         testSplits.add(split);
                     }
                     split = "" + curHand[j];
@@ -151,7 +152,13 @@ public class Hand {
             }
         }
         if (!split.isEmpty()) {
+            if (!split.equals("2")) {
+                allSplitsAre2 = false;
+            }
             testSplits.add(split);
+        }
+        if (allSplitsAre2 && testSplits.size() > 1) {
+            return false;
         }
         for (String testSplit : testSplits) {
             HandUtil handUtil = new HandUtil(testSplit);
@@ -173,12 +180,13 @@ public class Hand {
         return readySet;
     }
 
-    private boolean isReadyHelper(int[] curHand, int i) throws IOException {
-        curHand[i]++;
-        if (curHand[i] > 4) {
+    public boolean isReadyHelper(int[] curHand, int i) throws IOException {
+        int[] handCopy = Arrays.copyOf(curHand, 27);
+        handCopy[i]++;
+        if (handCopy[i] > 4) {
             return false;
         }
-        return canHuHelper(curHand);
+        return canHuHelper(handCopy);
     }
 
     private boolean isSevenPairs(int[] curHand) {
@@ -205,11 +213,17 @@ public class Hand {
         return forfeitedSimple;
     }
 
+    public void setForfeitedSimple(Simple forfeitedSimple) {
+        this.forfeitedSimple = forfeitedSimple;
+    }
+
     public Orientation getOrientation() {
         return orientation;
     }
 
-
+    public boolean isFinished() {
+        return finished;
+    }
 
     @Override
     public String toString() {

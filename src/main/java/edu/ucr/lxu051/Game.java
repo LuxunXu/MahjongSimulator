@@ -50,23 +50,68 @@ public class Game extends JPanel {
         distributeStartingTiles();
         whosTurn = Orientation.EAST;
         playersLeft.addAll(Arrays.asList(Orientation.values()));
+        offer(whosTurn);
+        for (Orientation orientation : Orientation.values()) {
+            System.out.println(players.get(orientation).toString());
+            players.get(orientation).decideForfeitedSimple();
+        }
         repaint();
     }
 
     public void offer(Orientation orientation) {
         Tile tile = tileMountain.pollFirst();
+        System.out.println(orientation + " drew " + tile.toString());
         players.get(orientation).drawTile(tile);
         tileLeft--;
-    }
-
-    public void discard(Orientation orientation) {
-        int discardedTile = players.get(orientation).discardAI();
-        players.get(orientation).discardTile(discardedTile);
-        discardedPiles.get(orientation).add(Tool.positionToTile(discardedTile));
         repaint();
     }
 
-    public void gang(Orientation orientation) {
+    public int discard(Orientation orientation) {
+        int discardedTile = players.get(orientation).discardAI();
+        players.get(orientation).discardTile(discardedTile);
+        // has issue: only in discarded pile when no one wants
+//        discardedPiles.get(orientation).add(Tool.positionToTile(discardedTile));
+        repaint();
+        Tile tile = Tool.positionToTile(discardedTile);
+        System.out.println(orientation + " discarded " + tile.toString());
+        return discardedTile;
+    }
+
+    public void discard(Orientation orientation, int i) {
+        players.get(orientation).discardTile(i);
+        // has issue: only in discarded pile when no one wants
+//        discardedPiles.get(orientation).add(Tool.positionToTile(i));
+        Tile tile = Tool.positionToTile(i);
+        System.out.println(orientation + " discarded " + tile.toString());
+        repaint();
+    }
+
+    public void peng(Orientation orientation, int i) {
+        System.out.println(orientation + " peng " + Tool.positionToTile(i).toString());
+        players.get(orientation).peng(i);
+        whosTurn = orientation;
+        repaint();
+    }
+
+    public void gangRevealed(Orientation orientation, int i) {
+        players.get(orientation).gangRevealed(i);
+        whosTurn = orientation;
+        repaint();
+    }
+
+    public void gangAttached(Orientation orientation, int i) {
+        players.get(orientation).gangAttached(i);
+        whosTurn = orientation;
+        repaint();
+    }
+
+    public void hu(Orientation orientation, int i) {
+        System.out.println(orientation + " declared hu.");
+        players.get(orientation).drawTile(i);
+        players.get(orientation).hu();
+        whosTurn = orientation;
+        System.out.println(players.get(orientation).toString());
+        repaint();
     }
 
     private void distributeStartingTiles() {
@@ -107,16 +152,144 @@ public class Game extends JPanel {
         this.whosTurn = whosTurn;
     }
 
-    public boolean isFinish() {
-        return tileMountain.isEmpty() || playersLeft.size() == 1;
-    }
-
     public void autoExecute() throws IOException {
-        offer(whosTurn);
-        while (isFinish()) {
+        while (!tileMountain.isEmpty()) {
+//            for (Orientation o : playersLeft) {
+//                System.out.println(players.get(o).toString());
+//            }
+//            System.out.println();
             int decision = players.get(whosTurn).decideAction();
+
+            while (decision == 300) {
+                offer(whosTurn);
+                decision = players.get(whosTurn).decideAction();
+            }
+            while (decision >= 400) { // handle qiangGang case
+                Orientation origin = whosTurn;
+                int tempTile = decision - 400;
+                LinkedList<Orientation> someoneHued = new LinkedList<>();
+                for (Orientation orientation : playersLeft) {
+                    if (!orientation.equals(whosTurn)) {
+                        Player p = players.get(orientation);
+                        if (p.isReadyHelper(p.getConcealedHand(), tempTile)) {
+                            if (p.wantHu(tempTile)) {
+                                hu(orientation, tempTile);
+                                someoneHued.add(orientation);
+                            }
+                        }
+                    }
+                }
+                if (playersLeft.size() == 1) {
+                    return;
+                }
+                if (!someoneHued.isEmpty()) {
+                    for (Orientation orientation : someoneHued) {
+                        playersLeft.remove(orientation);
+                    }
+                    discard(origin, tempTile);
+                    break;
+                } else {
+                    gangAttached(whosTurn, tempTile);
+                    offer(whosTurn);
+                    decision = players.get(whosTurn).decideAction();
+                }
+            }
+            boolean ifGanged = false;
             if (decision == 200) {
                 playersLeft.remove(whosTurn);
+            } else if (decision >= 0 && decision < 27) {
+                discard(whosTurn, decision);
+                boolean someoneDiscarded = true;
+                while (someoneDiscarded) {
+                    someoneDiscarded = false;
+                    LinkedList<Orientation> someoneHued = new LinkedList<>();
+                    for (Orientation orientation : playersLeft) {
+                        if (!orientation.equals(whosTurn)) {
+                            Player p = players.get(orientation);
+                            if (p.isReadyHelper(p.getConcealedHand(), decision)) {
+                                if (p.wantHu(decision)) {
+                                    hu(orientation, decision);
+                                    someoneHued.add(orientation);
+                                }
+                            }
+                        }
+                    }
+                    if (playersLeft.size() == 1) {
+                        return;
+                    }
+                    if (!someoneHued.isEmpty()) {
+                        for (Orientation orientation : someoneHued) {
+                            playersLeft.remove(orientation);
+                        }
+                        break;
+                    }
+                    for (Orientation orientation : playersLeft) {
+                        if (!orientation.equals(whosTurn)) {
+                            Player p = players.get(orientation);
+                            if (p.canGangRevealed(decision)) {
+                                if (p.wantGang(decision)) {
+                                    gangRevealed(orientation, decision);
+                                    ifGanged = true;
+                                    break;
+                                }
+                            } else if (p.canPeng(decision)) {
+                                if (p.wantPeng(decision)) {
+                                    peng(orientation, decision);
+                                    decision = discard(orientation);
+                                    someoneDiscarded = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!ifGanged) {
+                discardedPiles.get(whosTurn).add(Tool.positionToTile(decision));
+                whosTurn = getNextTurn();
+            }
+            offer(whosTurn);
+        }
+        // last round
+        int decision = players.get(whosTurn).decideActionLastRound();
+        if (decision == 200) {
+            playersLeft.remove(whosTurn);
+        } else {
+            discard(whosTurn, decision);
+            boolean someoneHued = false;
+            for (Orientation orientation : playersLeft) {
+                if (!orientation.equals(whosTurn)) {
+                    Player p = players.get(orientation);
+                    if (p.isReadyHelper(p.getConcealedHand(), decision)) {
+                        if (p.wantHu(decision)) {
+                            hu(orientation, decision);
+                            someoneHued = true;
+                        }
+                    }
+                }
+            }
+            if (someoneHued) {
+                return;
+            }
+            // check one last round if someone can still peng
+            while (decision != -1) {
+                boolean changeMade = false;
+                for (Orientation orientation : playersLeft) {
+                    if (!orientation.equals(whosTurn)) {
+                        Player p = players.get(orientation);
+                        if (p.canPeng(decision)) {
+                            if (p.wantPeng(decision)) {
+                                peng(orientation, decision);
+                                decision = discard(orientation);
+                                changeMade = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!changeMade) {
+                    decision = -1;
+                }
             }
         }
     }
@@ -155,12 +328,36 @@ public class Game extends JPanel {
         g2d.setColor(Color.BLACK);
         g2d.setFont(new Font("DengXian", Font.PLAIN, 2 * scale));
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2d.drawString("西", 31 * scale, 25 * scale);
-        g2d.drawString("北", 24 * scale, 32 * scale);
-        g2d.drawString("南", 38 * scale, 32 * scale);
-        g2d.drawString("东", 31 * scale, 39 * scale);
         if (whosTurn != null) {
             g2d.drawString("" + String.format("%02d", tileLeft), 31 * scale, 32 * scale);
+        }
+        if (players != null && players.get(Orientation.EAST).isFinished()) {
+            g2d.setColor(Color.RED);
+            g2d.drawString("东", 31 * scale, 39 * scale);
+        } else {
+            g2d.setColor(Color.BLACK);
+            g2d.drawString("东", 31 * scale, 39 * scale);
+        }
+        if (players != null && players.get(Orientation.WEST).isFinished()) {
+            g2d.setColor(Color.RED);
+            g2d.drawString("西", 31 * scale, 25 * scale);
+        } else {
+            g2d.setColor(Color.BLACK);
+            g2d.drawString("西", 31 * scale, 25 * scale);
+        }
+        if (players != null && players.get(Orientation.SOUTH).isFinished()) {
+            g2d.setColor(Color.RED);
+            g2d.drawString("南", 38 * scale, 32 * scale);
+        } else {
+            g2d.setColor(Color.BLACK);
+            g2d.drawString("南", 38 * scale, 32 * scale);
+        }
+        if (players != null && players.get(Orientation.NORTH).isFinished()) {
+            g2d.setColor(Color.RED);
+            g2d.drawString("北", 24 * scale, 32 * scale);
+        } else {
+            g2d.setColor(Color.BLACK);
+            g2d.drawString("北", 24 * scale, 32 * scale);
         }
     }
 
@@ -179,7 +376,7 @@ public class Game extends JPanel {
                     drawTile(image, g2d, x, y, false);
                     x += 3 * scale;
                 }
-                x += 2 * scale;
+                x += scale;
                 revealedCount++;
             } else if (revealedHand[pos] == 4) {
                 fileName = Tool.positionToTile(pos).toFileName();
@@ -190,7 +387,7 @@ public class Game extends JPanel {
                 drawTile(imageRotated, g2d, x + 3 * scale, y + 3 * scale, true);
                 x += 7 * scale;
                 drawTile(image, g2d, x, y, false);
-                x += 2 * scale;
+                x += 4 * scale;
                 revealedCount++;
             }
         }
@@ -255,7 +452,7 @@ public class Game extends JPanel {
                     drawTile(image, g2d, x, y, false);
                     x -= 3 * scale;
                 }
-                x -= 2 * scale;
+                x -= scale;
             } else if (revealedHand[pos] == 4) {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
@@ -265,7 +462,7 @@ public class Game extends JPanel {
                 drawTile(imageRotated, g2d, x - 4 * scale, y + scale, true);
                 x -= 7 * scale;
                 drawTile(image, g2d, x, y, false);
-                x -= 2 * scale;
+                x -= 4 * scale;
             }
         }
 
@@ -319,7 +516,7 @@ public class Game extends JPanel {
                     drawTile(imageRotated, g2d, x, y, true);
                     y -= 3 * scale;
                 }
-                y -= 2 * scale;
+                y -= scale;
             } else if (revealedHand[pos] == 4) {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
@@ -329,7 +526,7 @@ public class Game extends JPanel {
                 drawTile(image, g2d, x + 3 * scale, y - 4 * scale, false);
                 y -= 7 * scale;
                 drawTile(imageRotated, g2d, x, y, true);
-                y -= 2 * scale;
+                y -= 4 * scale;
             }
         }
 
@@ -373,7 +570,7 @@ public class Game extends JPanel {
             }
         }
 
-        y = 10 * scale;
+        y = 7 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
                 fileName = Tool.positionToTile(pos).toFileName();
@@ -383,7 +580,7 @@ public class Game extends JPanel {
                     drawTile(imageRotated, g2d, x, y, true);
                     y += 3 * scale;
                 }
-                y += 2 * scale;
+                y += scale;
             } else if (revealedHand[pos] == 4) {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
@@ -393,7 +590,7 @@ public class Game extends JPanel {
                 drawTile(image, g2d, x - 2 * scale, y + 3 * scale, false);
                 y += 7 * scale;
                 drawTile(imageRotated, g2d, x, y, true);
-                y += 5 * scale;
+                y += 4 * scale;
             }
         }
 
