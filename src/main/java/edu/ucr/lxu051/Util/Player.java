@@ -32,7 +32,7 @@ public class Player extends Hand {
 
     public int discardAI() {
         Random rnd = new Random();
-//        rnd.setSeed(1);
+        rnd.setSeed(1);
 
         // First discard forfeited simple
         int forfeitedSimpleIndex = Tool.simpleToIndex(getForfeitedSimple());

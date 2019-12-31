@@ -39,9 +39,11 @@ public class Game extends JPanel {
         players = new HashMap<>();
         genMountain();
         Random rnd = new Random();
-        if (seed > 0) {
-            rnd.setSeed(seed);
+        if (seed == 0) {
+            seed = System.currentTimeMillis();
         }
+        rnd.setSeed(seed);
+        System.out.println("Seed: " + seed);
         Collections.shuffle(tileMountain, rnd);
         for (Orientation orientation : Orientation.values()) {
             players.put(orientation, new Player(orientation));
@@ -293,7 +295,7 @@ public class Game extends JPanel {
             }
         }
     }
-    
+
     public Orientation getNextTurn() {
         int i = playersLeft.indexOf(whosTurn);
         if (i == playersLeft.size() - 1) {
