@@ -30,13 +30,13 @@ public class Game extends JPanel {
         this.seed = seed;
         this.scale = scale;
         FRONT = ImageProcessor.loadImage(PIC_SRC + "Front" + PIC_FORMAT, 3 * scale, 4 * scale);
-        playersLeft = new LinkedList<>();
     }
 
     public void initGame() {
         tileMountain = new LinkedList<>();
         discardedPiles = new HashMap<>();
         players = new HashMap<>();
+        playersLeft = new LinkedList<>();
         genMountain();
         Random rnd = new Random();
         if (seed == 0) {
