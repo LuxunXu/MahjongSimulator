@@ -69,7 +69,7 @@ public class Player extends Hand {
             System.out.println(toString());
             return 200;
         }
-        LinkedList<Integer> canGangConcealedSet = canGangConcelaed();
+        LinkedList<Integer> canGangConcealedSet = canGangConcealed();
         if (!canGangConcealedSet.isEmpty()) {
             int i = canGangConcealedSet.getFirst();
             gangConcealed(i);

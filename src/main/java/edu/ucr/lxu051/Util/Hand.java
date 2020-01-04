@@ -68,7 +68,7 @@ public class Hand {
         revealedHand[i] = 3;
     }
 
-    public LinkedList<Integer> canGangConcelaed() {
+    public LinkedList<Integer> canGangConcealed() {
         int forfeitedSimpleIndex = Tool.simpleToIndex(getForfeitedSimple());
         LinkedList<Integer> candidates = new LinkedList<>();
         for (int i = 0; i < 27; i++) {

@@ -253,6 +253,7 @@ public class Game extends JPanel {
             offer(whosTurn);
         }
         // last round
+        System.out.println("Entering last round.");
         int decision = players.get(whosTurn).decideActionLastRound();
         if (decision == 200) {
             playersLeft.remove(whosTurn);
