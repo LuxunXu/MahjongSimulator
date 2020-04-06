@@ -6,6 +6,8 @@ import edu.ucr.lxu051.Util.Simple;
 import edu.ucr.lxu051.Util.Tile;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.plaf.basic.BasicBorders;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,7 +15,7 @@ import java.io.IOException;
 
 public class App extends JFrame {
 
-    private final int SCALE = 13;
+    private final int SCALE = 15;
     private Game game;
     private JPanel contentPane;
 
@@ -54,6 +56,7 @@ public class App extends JFrame {
 
         JPanel controlPanel = new JPanel();
         controlPanel.setSize(64 * SCALE, 4 * SCALE);
+        controlPanel.setBorder(new BevelBorder(1, Color.GRAY, Color.GRAY));
         JButton newGameButton = new JButton("New Game");
         newGameButton.addActionListener(new ActionListener() {
             @Override
@@ -75,7 +78,7 @@ public class App extends JFrame {
         controlPanel.add(newGameButton);
         controlPanel.add(goButton);
 
-        game = new Game(SCALE,1577802510634L);
+        game = new Game(SCALE,1586154493735L);
         game.setSize(64 * SCALE, 64 * SCALE);
 
         contentPane.add(game, BorderLayout.CENTER);

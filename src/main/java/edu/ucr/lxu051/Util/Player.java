@@ -62,7 +62,7 @@ public class Player extends Hand {
         }
     }
 
-    public int decideAction() throws IOException { // int = 27 means gang
+    public int decideAction(boolean canGang) throws IOException { // int = 27 means gang
         if (canHu()) {
             System.out.println(getOrientation() + " declared ZiMo.");
             hu();
@@ -70,13 +70,13 @@ public class Player extends Hand {
             return 200;
         }
         LinkedList<Integer> canGangConcealedSet = canGangConcealed();
-        if (!canGangConcealedSet.isEmpty()) {
+        if (!canGangConcealedSet.isEmpty() && canGang) {
             int i = canGangConcealedSet.getFirst();
             gangConcealed(i);
             return 300;
         }
         LinkedList<Integer> canGangAttachedSet = canGangAttached();
-        if (!canGangAttachedSet.isEmpty()) {
+        if (!canGangAttachedSet.isEmpty() && canGang) {
             int i = canGangAttachedSet.getFirst();
             return 400 + i;
         }
@@ -85,7 +85,9 @@ public class Player extends Hand {
 
     public int decideActionLastRound() throws IOException { // int = 27 means gang
         if (canHu()) {
+            System.out.println(getOrientation() + " declared ZiMo.");
             hu();
+            System.out.println(toString());
             return 200;
         }
         return discardAI();

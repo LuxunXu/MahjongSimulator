@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class Game extends JPanel {
+    private boolean totalRandom;
     private int scale;
     private final String PIC_SRC = "src/main/resources/Pic/Regular/";
     private final String PIC_FORMAT = ".svg";
@@ -27,6 +28,7 @@ public class Game extends JPanel {
     }
 
     public Game(int scale, long seed) {
+        this.totalRandom = seed == 0;
         this.seed = seed;
         this.scale = scale;
         FRONT = ImageProcessor.loadImage(PIC_SRC + "Front" + PIC_FORMAT, 3 * scale, 4 * scale);
@@ -39,7 +41,7 @@ public class Game extends JPanel {
         playersLeft = new LinkedList<>();
         genMountain();
         Random rnd = new Random();
-        if (seed == 0) {
+        if (totalRandom) {
             seed = System.currentTimeMillis();
         }
         rnd.setSeed(seed);
@@ -52,7 +54,7 @@ public class Game extends JPanel {
         distributeStartingTiles();
         whosTurn = Orientation.EAST;
         playersLeft.addAll(Arrays.asList(Orientation.values()));
-        offer(whosTurn);
+//        offer(whosTurn);
         for (Orientation orientation : Orientation.values()) {
             System.out.println(players.get(orientation).toString());
             players.get(orientation).decideForfeitedSimple();
@@ -160,11 +162,12 @@ public class Game extends JPanel {
 //                System.out.println(players.get(o).toString());
 //            }
 //            System.out.println();
-            int decision = players.get(whosTurn).decideAction();
+            offer(whosTurn);
+            int decision = players.get(whosTurn).decideAction(!tileMountain.isEmpty());
 
             while (decision == 300) {
                 offer(whosTurn);
-                decision = players.get(whosTurn).decideAction();
+                decision = players.get(whosTurn).decideAction(!tileMountain.isEmpty());
             }
             while (decision >= 400) { // handle qiangGang case
                 Orientation origin = whosTurn;
@@ -193,7 +196,7 @@ public class Game extends JPanel {
                 } else {
                     gangAttached(whosTurn, tempTile);
                     offer(whosTurn);
-                    decision = players.get(whosTurn).decideAction();
+                    decision = players.get(whosTurn).decideAction(!tileMountain.isEmpty());
                 }
             }
             boolean ifGanged = false;
@@ -250,51 +253,51 @@ public class Game extends JPanel {
                 discardedPiles.get(whosTurn).add(Tool.positionToTile(decision));
                 whosTurn = getNextTurn();
             }
-            offer(whosTurn);
+//            offer(whosTurn);
         }
         // last round
-        System.out.println("Entering last round.");
-        int decision = players.get(whosTurn).decideActionLastRound();
-        if (decision == 200) {
-            playersLeft.remove(whosTurn);
-        } else {
-            discard(whosTurn, decision);
-            boolean someoneHued = false;
-            for (Orientation orientation : playersLeft) {
-                if (!orientation.equals(whosTurn)) {
-                    Player p = players.get(orientation);
-                    if (p.isReadyHelper(p.getConcealedHand(), decision)) {
-                        if (p.wantHu(decision)) {
-                            hu(orientation, decision);
-                            someoneHued = true;
-                        }
-                    }
-                }
-            }
-            if (someoneHued) {
-                return;
-            }
-            // check one last round if someone can still peng
-            while (decision != -1) {
-                boolean changeMade = false;
-                for (Orientation orientation : playersLeft) {
-                    if (!orientation.equals(whosTurn)) {
-                        Player p = players.get(orientation);
-                        if (p.canPeng(decision)) {
-                            if (p.wantPeng(decision)) {
-                                peng(orientation, decision);
-                                decision = discard(orientation);
-                                changeMade = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!changeMade) {
-                    decision = -1;
-                }
-            }
-        }
+//        System.out.println("Deciding last discarded tile.");
+//        int decision = players.get(whosTurn).decideActionLastRound();
+//        if (decision == 200) {
+//            playersLeft.remove(whosTurn);
+//        } else {
+//            discard(whosTurn, decision);
+//            boolean someoneHued = false;
+//            for (Orientation orientation : playersLeft) {
+//                if (!orientation.equals(whosTurn)) {
+//                    Player p = players.get(orientation);
+//                    if (p.isReadyHelper(p.getConcealedHand(), decision)) {
+//                        if (p.wantHu(decision)) {
+//                            hu(orientation, decision);
+//                            someoneHued = true;
+//                        }
+//                    }
+//                }
+//            }
+//            if (someoneHued) {
+//                return;
+//            }
+//            // check one last round if someone can still peng
+//            while (decision != -1) {
+//                boolean changeMade = false;
+//                for (Orientation orientation : playersLeft) {
+//                    if (!orientation.equals(whosTurn)) {
+//                        Player p = players.get(orientation);
+//                        if (p.canPeng(decision)) {
+//                            if (p.wantPeng(decision)) {
+//                                peng(orientation, decision);
+//                                decision = discard(orientation);
+//                                changeMade = true;
+//                                break;
+//                            }
+//                        }
+//                    }
+//                }
+//                if (!changeMade) {
+//                    decision = -1;
+//                }
+//            }
+//        }
     }
 
     public Orientation getNextTurn() {
@@ -320,6 +323,12 @@ public class Game extends JPanel {
 
     private void drawCenter(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
+        g2d.setColor(Color.BLACK);
+        g2d.setStroke(new BasicStroke(4f));
+        g2d.drawLine(0, 11 * scale, 53 * scale, 11 * scale);
+        g2d.drawLine(53 * scale, 0, 53 * scale, 53 * scale);
+        g2d.drawLine(11 * scale, 53 * scale, 64 * scale, 53 * scale);
+        g2d.drawLine(11 * scale, 11 * scale, 11 * scale, 64 * scale);
         g2d.setColor(Color.GRAY);
         g2d.setStroke(new BasicStroke(2f));
         g2d.drawRect(23 * scale, 23 * scale, 18 * scale, 18 * scale);
@@ -370,7 +379,7 @@ public class Game extends JPanel {
         int[] concealedHand = players.get(Orientation.WEST).getConcealedHand();
         LinkedList<Tile> discardedPile = discardedPiles.get(Orientation.WEST);
         String fileName; BufferedImage image;
-        int x = 7 * scale, revealedCount = 0, y = 3 * scale;
+        int x = 3 * scale, revealedCount = 0, y = 3 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
                 fileName = Tool.positionToTile(pos).toFileName();
@@ -394,8 +403,13 @@ public class Game extends JPanel {
                 revealedCount++;
             }
         }
-        int tileLeft = 13 - 3 * revealedCount;
-        x = 53 * scale  - 3 * scale * tileLeft;
+        int tileLeft;
+        if (players.get(Orientation.WEST).isFinished()) {
+            tileLeft = 13 - 3 * revealedCount + 1;
+        } else {
+            tileLeft = 13 - 3 * revealedCount;
+        }
+        x = 53 * scale - 3 * scale * tileLeft;
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
@@ -446,7 +460,7 @@ public class Game extends JPanel {
             }
         }
 
-        x = 54 * scale;
+        x = 58 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
                 fileName = Tool.positionToTile(pos).toFileName();
@@ -509,7 +523,7 @@ public class Game extends JPanel {
             }
         }
 
-        y = 54 * scale;
+        y = 58 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
                 fileName = Tool.positionToTile(pos).toFileName();
@@ -573,7 +587,7 @@ public class Game extends JPanel {
             }
         }
 
-        y = 7 * scale;
+        y = 3 * scale;
         for (int pos = 0; pos < revealedHand.length; pos++) {
             if (revealedHand[pos] == 3) {
                 fileName = Tool.positionToTile(pos).toFileName();
