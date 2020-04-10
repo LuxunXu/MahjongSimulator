@@ -78,7 +78,7 @@ public class App extends JFrame {
         controlPanel.add(newGameButton);
         controlPanel.add(goButton);
 
-        game = new Game(SCALE,1586154493735L);
+        game = new Game(SCALE,0);
         game.setSize(64 * SCALE, 64 * SCALE);
 
         contentPane.add(game, BorderLayout.CENTER);

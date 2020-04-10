@@ -83,16 +83,6 @@ public class Player extends Hand {
         return discardAI();
     }
 
-    public int decideActionLastRound() throws IOException { // int = 27 means gang
-        if (canHu()) {
-            System.out.println(getOrientation() + " declared ZiMo.");
-            hu();
-            System.out.println(toString());
-            return 200;
-        }
-        return discardAI();
-    }
-
     public boolean wantHu(int i) {
         return true;
     }
