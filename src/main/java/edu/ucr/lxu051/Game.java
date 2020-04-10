@@ -253,51 +253,7 @@ public class Game extends JPanel {
                 discardedPiles.get(whosTurn).add(Tool.positionToTile(decision));
                 whosTurn = getNextTurn();
             }
-//            offer(whosTurn);
         }
-        // last round
-//        System.out.println("Deciding last discarded tile.");
-//        int decision = players.get(whosTurn).decideActionLastRound();
-//        if (decision == 200) {
-//            playersLeft.remove(whosTurn);
-//        } else {
-//            discard(whosTurn, decision);
-//            boolean someoneHued = false;
-//            for (Orientation orientation : playersLeft) {
-//                if (!orientation.equals(whosTurn)) {
-//                    Player p = players.get(orientation);
-//                    if (p.isReadyHelper(p.getConcealedHand(), decision)) {
-//                        if (p.wantHu(decision)) {
-//                            hu(orientation, decision);
-//                            someoneHued = true;
-//                        }
-//                    }
-//                }
-//            }
-//            if (someoneHued) {
-//                return;
-//            }
-//            // check one last round if someone can still peng
-//            while (decision != -1) {
-//                boolean changeMade = false;
-//                for (Orientation orientation : playersLeft) {
-//                    if (!orientation.equals(whosTurn)) {
-//                        Player p = players.get(orientation);
-//                        if (p.canPeng(decision)) {
-//                            if (p.wantPeng(decision)) {
-//                                peng(orientation, decision);
-//                                decision = discard(orientation);
-//                                changeMade = true;
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
-//                if (!changeMade) {
-//                    decision = -1;
-//                }
-//            }
-//        }
     }
 
     public Orientation getNextTurn() {
