@@ -75,8 +75,20 @@ public class App extends JFrame {
                 }
             }
         });
+        JButton stepButton = new JButton("Step");
+        stepButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    game.autoExecute();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
         controlPanel.add(newGameButton);
         controlPanel.add(goButton);
+        controlPanel.add(stepButton);
 
         game = new Game(SCALE,0);
         game.setSize(64 * SCALE, 64 * SCALE);

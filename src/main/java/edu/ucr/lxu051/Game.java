@@ -73,8 +73,6 @@ public class Game extends JPanel {
     public int discard(Orientation orientation) {
         int discardedTile = players.get(orientation).discardAI();
         players.get(orientation).discardTile(discardedTile);
-        // has issue: only in discarded pile when no one wants
-//        discardedPiles.get(orientation).add(Tool.positionToTile(discardedTile));
         repaint();
         Tile tile = Tool.positionToTile(discardedTile);
         System.out.println(orientation + " discarded " + tile.toString());
@@ -83,8 +81,6 @@ public class Game extends JPanel {
 
     public void discard(Orientation orientation, int i) {
         players.get(orientation).discardTile(i);
-        // has issue: only in discarded pile when no one wants
-//        discardedPiles.get(orientation).add(Tool.positionToTile(i));
         Tile tile = Tool.positionToTile(i);
         System.out.println(orientation + " discarded " + tile.toString());
         repaint();
@@ -156,12 +152,14 @@ public class Game extends JPanel {
         this.whosTurn = whosTurn;
     }
 
+
+    /*
+    * decision == 300 明杠
+    * decision == 400 加杠
+    * decision == 200 胡
+    * */
     public void autoExecute() throws IOException {
         while (!tileMountain.isEmpty()) {
-//            for (Orientation o : playersLeft) {
-//                System.out.println(players.get(o).toString());
-//            }
-//            System.out.println();
             offer(whosTurn);
             int decision = players.get(whosTurn).decideAction(!tileMountain.isEmpty());
 
@@ -275,6 +273,7 @@ public class Game extends JPanel {
         drawEast(g);
         drawNorth(g);
         drawSouth(g);
+
     }
 
     private void drawCenter(Graphics g) {
