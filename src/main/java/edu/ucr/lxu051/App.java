@@ -1,13 +1,7 @@
 package edu.ucr.lxu051;
 
-import edu.ucr.lxu051.Util.Hand;
-import edu.ucr.lxu051.Util.Orientation;
-import edu.ucr.lxu051.Util.Simple;
-import edu.ucr.lxu051.Util.Tile;
-
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
-import javax.swing.plaf.basic.BasicBorders;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,7 +9,7 @@ import java.io.IOException;
 
 public class App extends JFrame {
 
-    private final int SCALE = 15;
+    private final int SCALE = 13;
     private Game game;
     private JPanel contentPane;
 
@@ -80,7 +74,7 @@ public class App extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    game.autoExecute();
+                    game.step();
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
@@ -90,7 +84,7 @@ public class App extends JFrame {
         controlPanel.add(goButton);
         controlPanel.add(stepButton);
 
-        game = new Game(SCALE,0);
+        game = new Game(SCALE,0); // 一炮两响
         game.setSize(64 * SCALE, 64 * SCALE);
 
         contentPane.add(game, BorderLayout.CENTER);
