@@ -24,6 +24,8 @@ public class Game extends JPanel {
     private Orientation whosTurn;
     private LinkedList<Orientation> playersLeft;
     private Status currentStatus;
+    private Tile currentTileOfInterest;
+    private Tile offeredTile;
 
     public Game(int scale) {
         this(scale, 0);
@@ -56,6 +58,8 @@ public class Game extends JPanel {
         distributeStartingTiles();
         whosTurn = Orientation.EAST;
         currentStatus = Status.OFFER;
+        currentTileOfInterest = null;
+        offeredTile = null;
         playersLeft.addAll(Arrays.asList(Orientation.values()));
 //        offer(whosTurn);
         for (Orientation orientation : Orientation.values()) {
@@ -67,6 +71,7 @@ public class Game extends JPanel {
 
     public void offer(Orientation orientation) {
         Tile tile = tileMountain.pollFirst();
+        offeredTile = tile;
         System.out.println(orientation + " drew " + tile.toString());
         players.get(orientation).drawTile(tile);
         tileLeft--;
@@ -108,10 +113,10 @@ public class Game extends JPanel {
         repaint();
     }
 
-    public void hu(Orientation orientation, int i) {
+    public void hu(Orientation orientation, int i, String type) {
         System.out.println(orientation + " declared hu.");
         players.get(orientation).drawTile(i);
-        players.get(orientation).hu();
+        players.get(orientation).hu(type);
         whosTurn = orientation;
         System.out.println(players.get(orientation).toString());
         repaint();
@@ -162,7 +167,7 @@ public class Game extends JPanel {
     * decision == 200 胡
     * */
     public void autoExecute() throws IOException {
-        while (!tileMountain.isEmpty()) {
+        while (!tileMountain.isEmpty() && playersLeft.size() > 1) {
             offer(whosTurn);
             int decision = players.get(whosTurn).decideAction(!tileMountain.isEmpty());
 
@@ -179,7 +184,7 @@ public class Game extends JPanel {
                         Player p = players.get(orientation);
                         if (p.isReadyHelper(p.getConcealedHand(), tempTile)) {
                             if (p.wantHu(tempTile)) {
-                                hu(orientation, tempTile);
+                                hu(orientation, tempTile, "QiangGang");
                                 someoneHued.add(orientation);
                             }
                         }
@@ -216,6 +221,7 @@ public class Game extends JPanel {
                 boolean someoneDiscarded = true;
                 boolean getNext = true;
                 while (someoneDiscarded) {
+                    getNext = true;
                     someoneDiscarded = false;
                     LinkedList<Orientation> someoneHued = new LinkedList<>();
                     for (Orientation orientation : playersLeft) {
@@ -223,7 +229,6 @@ public class Game extends JPanel {
                             Player p = players.get(orientation);
                             if (p.isReadyHelper(p.getConcealedHand(), decision)) {
                                 if (p.wantHu(decision)) {
-                                    hu(orientation, decision);
                                     someoneHued.add(orientation);
                                 }
                             }
@@ -231,6 +236,11 @@ public class Game extends JPanel {
                     }
                     if (!someoneHued.isEmpty()) {
                         for (Orientation orientation : someoneHued) {
+                            if (someoneHued.size() > 1) {
+                                hu(orientation, decision, "Double");
+                            } else {
+                                hu(orientation, decision, "Hu");
+                            }
                             whosTurn = orientation;
                             whosTurn = getNextTurn();
                             playersLeft.remove(orientation);
@@ -245,7 +255,7 @@ public class Game extends JPanel {
                     for (Orientation orientation : playersLeft) {
                         if (!orientation.equals(whosTurn)) {
                             Player p = players.get(orientation);
-                            if (p.canGangRevealed(decision)) {
+                            if (p.canGangRevealed(decision) && !tileMountain.isEmpty()) {
                                 if (p.wantGang(decision)) {
                                     gangRevealed(orientation, decision);
                                     getNext = false;
@@ -271,7 +281,7 @@ public class Game extends JPanel {
                 }
             }
         }
-        System.out.println("Game over: no more tiles.");
+        System.out.println("Game already over.");
     }
 
     /*
@@ -280,32 +290,152 @@ public class Game extends JPanel {
     * decision == 200 胡
     * */
     public void step() throws IOException {
-        if (tileMountain.isEmpty()) {
+        if (playersLeft.size() == 1) {
+            System.out.println("Game over: three player wins.");
             return;
-        } else {
-            if (currentStatus.equals(Status.OFFER)) {
-                offer(whosTurn);
-                currentStatus = Status.DECISION;
-            } else if (currentStatus.equals(Status.DECISION)) {
-                int decision = players.get(whosTurn).decideAction(!tileMountain.isEmpty());
-                if (decision == 300) {
+        } else if (currentStatus.equals(Status.OFFER)) {
+            if (tileMountain.isEmpty()) {
+                System.out.println("Game over: no more tiles.");
+                return;
+            }
+            offer(whosTurn);
+            currentTileOfInterest = null;
+            currentStatus = Status.DECISION;
+        } else if (currentStatus.equals(Status.DECISION)) {
+            int decision = players.get(whosTurn).decideAction(!tileMountain.isEmpty());
+            if (decision == 300) {
+                currentStatus = Status.OFFER;
+            } else if (decision == 200) {
+                Orientation temp = whosTurn;
+                whosTurn = getNextTurn();
+                playersLeft.remove(temp);
+            } else if (decision >= 0 && decision < 27) {
+                discard(whosTurn, decision);
+                discardedPiles.get(whosTurn).add(Tool.positionToTile(decision));
+                currentTileOfInterest = Tool.positionToTile(decision);
+                currentStatus = Status.WAIT;
+            } else if (decision >= 400) {
+                int pos = decision - 400;
+                currentTileOfInterest = Tool.positionToTile(pos);
+                currentStatus = Status.WAITFORQIANG;
+            } else {
+                throw new IllegalStateException("Wrong decision ID.");
+            }
+        } else if (currentStatus.equals(Status.WAITFORQIANG)) {
+            if (currentTileOfInterest == null) {
+                throw new IllegalStateException("No tile of interest.");
+            } else {
+                int curTile = Tool.tileToPosition(currentTileOfInterest);
+                Orientation origin = whosTurn;
+                // Start to ask for move
+                LinkedList<Orientation> someoneHued = new LinkedList<>();
+                for (Orientation player : playersLeft) {
+                    if (!player.equals(origin)) {
+                        Player p = players.get(player);
+                        if (p.isReadyHelper(p.getConcealedHand(), curTile)) {
+                            if (p.wantHu(curTile)) {
+                                someoneHued.add(player);
+                            }
+                        }
+                    }
+                }
+                if (!someoneHued.isEmpty()) {
+                    discardedPiles.get(origin).removeLast();
+                    for (Orientation orientation : someoneHued) {
+                        if (someoneHued.size() > 1) {
+                            hu(orientation, curTile, "Double");
+                        } else {
+                            hu(orientation, curTile, "Hu");
+                        }
+                        whosTurn = getNextTurn();
+                        playersLeft.remove(orientation);
+                        if (playersLeft.size() == 1) {
+                            System.out.println("Game over: three player wins.");
+                            return;
+                        }
+                    }
                     currentStatus = Status.OFFER;
-                } else if (decision == 200) {
-                    playersLeft.remove(whosTurn);
-                    whosTurn = getNextTurn();
-                } else if (decision >= 0 && decision < 27) {
-                    discard(whosTurn, decision);
-                    discardedPiles.get(whosTurn).add(Tool.positionToTile(decision));
-                    currentStatus = Status.WAIT;
+                } else {
+                    gangAttached(origin, curTile);
+                    currentStatus = Status.OFFER;
                 }
             }
+        } else if (currentStatus.equals(Status.WAIT)) {
+            if (currentTileOfInterest == null) {
+                throw new IllegalStateException("No tile of interest.");
+            } else {
+//                    whosTurn = getNextTurn();
+//                    currentStatus = Status.OFFER;
+                int curTile = Tool.tileToPosition(currentTileOfInterest);
+                Orientation origin = whosTurn;
+                // Start to ask for move
+                LinkedList<Orientation> someoneHued = new LinkedList<>();
+                for (Orientation player : playersLeft) {
+                    if (!player.equals(origin)) {
+                        Player p = players.get(player);
+                        if (p.isReadyHelper(p.getConcealedHand(), curTile)) {
+                            if (p.wantHu(curTile)) {
+                                someoneHued.add(player);
+                            }
+                        }
+                    }
+                }
+                if (!someoneHued.isEmpty()) {
+                    discardedPiles.get(origin).removeLast();
+                    for (Orientation orientation : someoneHued) {
+                        if (someoneHued.size() > 1) {
+                            hu(orientation, curTile, "Double");
+                        } else {
+                            hu(orientation, curTile, "Hu");
+                        }
+                        whosTurn = orientation;
+                        whosTurn = getNextTurn();
+                        playersLeft.remove(orientation);
+                        if (playersLeft.size() == 1) {
+                            System.out.println("Game over: three player wins.");
+                            return;
+                        }
+                    }
+                    currentStatus = Status.OFFER;
+                } else {
+                    for (Orientation orientation : playersLeft) {
+                        if (!orientation.equals(whosTurn)) {
+                            Player p = players.get(orientation);
+                            if (p.canGangRevealed(curTile) && !tileMountain.isEmpty()) {
+                                if (p.wantGang(curTile)) {
+                                    discardedPiles.get(origin).removeLast();
+                                    gangRevealed(orientation, curTile);
+                                    currentStatus = Status.OFFER;
+                                    return;
+                                }
+                            } else if (p.canPeng(curTile)) {
+                                if (p.wantPeng(curTile)) {
+                                    discardedPiles.get(origin).removeLast();
+                                    peng(orientation, curTile);
+                                    currentStatus = Status.DISCARD;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    whosTurn = getNextTurn();
+                    currentStatus = Status.OFFER;
+                }
+            }
+        } else if (currentStatus.equals(Status.DISCARD)) {
+            int decision = discard(whosTurn);
+            discardedPiles.get(whosTurn).add(Tool.positionToTile(decision));
+            currentTileOfInterest = Tool.positionToTile(decision);
+            currentStatus = Status.WAIT;
+        } else {
+            throw new IllegalStateException("Wrong Status.");
         }
     }
 
     public Orientation getNextTurn() {
 //        List<Orientation> seating = Arrays.asList(Orientation.EAST, Orientation.SOUTH, Orientation.WEST, Orientation.NORTH);
         int i = playersLeft.indexOf(whosTurn);
-        if (i == playersLeft.size() - 1) {
+        if (i + 1 == playersLeft.size()) {
             return playersLeft.get(0);
         }
         return playersLeft.get(i + 1);
@@ -349,7 +479,7 @@ public class Game extends JPanel {
         }
         if (players != null && players.get(Orientation.EAST).isFinished()) {
             g2d.setColor(Color.GREEN);
-            g2d.drawString("东", 31 * scale, 39 * scale);
+            g2d.drawString("东" + players.get(Orientation.EAST).getHuType(), 31 * scale, 39 * scale);
         } else if (whosTurn != null && whosTurn.equals(Orientation.EAST)) {
             g2d.setColor(Color.RED);
             g2d.drawString("东", 31 * scale, 39 * scale);
@@ -359,7 +489,7 @@ public class Game extends JPanel {
         }
         if (players != null && players.get(Orientation.WEST).isFinished()) {
             g2d.setColor(Color.GREEN);
-            g2d.drawString("西", 31 * scale, 25 * scale);
+            g2d.drawString("西" + players.get(Orientation.WEST).getHuType(), 31 * scale, 25 * scale);
         } else if (whosTurn != null && whosTurn.equals(Orientation.WEST)) {
             g2d.setColor(Color.RED);
             g2d.drawString("西", 31 * scale, 25 * scale);
@@ -369,7 +499,7 @@ public class Game extends JPanel {
         }
         if (players != null && players.get(Orientation.SOUTH).isFinished()) {
             g2d.setColor(Color.GREEN);
-            g2d.drawString("南", 38 * scale, 32 * scale);
+            g2d.drawString("南" + players.get(Orientation.SOUTH).getHuType(), 38 * scale, 32 * scale);
         } else if (whosTurn != null && whosTurn.equals(Orientation.SOUTH)) {
             g2d.setColor(Color.RED);
             g2d.drawString("南", 38 * scale, 32 * scale);
@@ -379,7 +509,7 @@ public class Game extends JPanel {
         }
         if (players != null && players.get(Orientation.NORTH).isFinished()) {
             g2d.setColor(Color.GREEN);
-            g2d.drawString("北", 24 * scale, 32 * scale);
+            g2d.drawString("北" + players.get(Orientation.NORTH).getHuType(), 24 * scale, 32 * scale);
         } else if (whosTurn != null && whosTurn.equals(Orientation.NORTH)) {
             g2d.setColor(Color.RED);
             g2d.drawString("北", 24 * scale, 32 * scale);
@@ -401,7 +531,7 @@ public class Game extends JPanel {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 for (int i = 0; i < 3; i++) {
-                    drawTile(image, g2d, x, y, false);
+                    drawTile(image, g2d, x, y, false, null);
                     x += 3 * scale;
                 }
                 x += scale;
@@ -410,11 +540,11 @@ public class Game extends JPanel {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 BufferedImage imageRotated = ImageProcessor.rotate(image, false);
-                drawTile(image, g2d, x, y, false);
-                drawTile(imageRotated, g2d, x + 3 * scale, y, true);
-                drawTile(imageRotated, g2d, x + 3 * scale, y + 3 * scale, true);
+                drawTile(image, g2d, x, y, false, null);
+                drawTile(imageRotated, g2d, x + 3 * scale, y, true, null);
+                drawTile(imageRotated, g2d, x + 3 * scale, y + 3 * scale, true, null);
                 x += 7 * scale;
-                drawTile(image, g2d, x, y, false);
+                drawTile(image, g2d, x, y, false, null);
                 x += 4 * scale;
                 revealedCount++;
             }
@@ -424,13 +554,20 @@ public class Game extends JPanel {
             tileLeft += concealedHand[i];
         }
         x = 53 * scale - 3 * scale * tileLeft;
+        boolean turnedRed = false;
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 for (int i = 0; i < numTiles; i++) {
-                    drawTile(image, g2d, x, y, false);
+                    if (offeredTile != null && whosTurn.equals(Orientation.WEST) && currentStatus.equals(Status.DECISION)
+                            && Tool.tileToPosition(offeredTile) == pos && !turnedRed) {
+                        drawTile(image, g2d, x, y, false, Color.red);
+                        turnedRed = true;
+                    } else {
+                        drawTile(image, g2d, x, y, false, null);
+                    }
                     x += 3 * scale;
                 }
             }
@@ -439,7 +576,8 @@ public class Game extends JPanel {
         int discardedCount = 0;
         x = 41 * scale;
         y = 19 * scale;
-        for (Tile tile : discardedPile) {
+        for (int i = 0; i < discardedPile.size(); i++) {
+            Tile tile = discardedPile.get(i);
             if (discardedCount == 6) {
                 x = 41 * scale;
                 y = 15 * scale;
@@ -450,7 +588,11 @@ public class Game extends JPanel {
             x -= 3 * scale;
             fileName = tile.toFileName();
             image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
-            drawTile(image, g2d, x, y, false);
+            if (i == discardedPile.size() - 1 && whosTurn.equals(Orientation.WEST) && currentStatus.equals(Status.WAIT)) {
+                drawTile(image, g2d, x, y, false, Color.RED);
+            } else {
+                drawTile(image, g2d, x, y, false, null);
+            }
             discardedCount++;
         }
     }
@@ -462,13 +604,20 @@ public class Game extends JPanel {
         LinkedList<Tile> discardedPile = discardedPiles.get(Orientation.EAST);
         String fileName; BufferedImage image;
         int x = 11 * scale, y = 57 * scale;
+        boolean turnedRed = false;
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 for (int i = 0; i < numTiles; i++) {
-                    drawTile(image, g2d, x, y, false);
+                    if (offeredTile != null && whosTurn.equals(Orientation.EAST) && currentStatus.equals(Status.DECISION)
+                            && Tool.tileToPosition(offeredTile) == pos && !turnedRed) {
+                        drawTile(image, g2d, x, y, false, Color.RED);
+                        turnedRed = true;
+                    } else {
+                        drawTile(image, g2d, x, y, false, null);
+                    }
                     x += 3 * scale;
                 }
             }
@@ -480,7 +629,7 @@ public class Game extends JPanel {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 for (int i = 0; i < 3; i++) {
-                    drawTile(image, g2d, x, y, false);
+                    drawTile(image, g2d, x, y, false, null);
                     x -= 3 * scale;
                 }
                 x -= scale;
@@ -488,11 +637,11 @@ public class Game extends JPanel {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 BufferedImage imageRotated = ImageProcessor.rotate(image, false);
-                drawTile(image, g2d, x, y, false);
-                drawTile(imageRotated, g2d, x - 4 * scale, y - 2 * scale, true);
-                drawTile(imageRotated, g2d, x - 4 * scale, y + scale, true);
+                drawTile(image, g2d, x, y, false, null);
+                drawTile(imageRotated, g2d, x - 4 * scale, y - 2 * scale, true, null);
+                drawTile(imageRotated, g2d, x - 4 * scale, y + scale, true, null);
                 x -= 7 * scale;
-                drawTile(image, g2d, x, y, false);
+                drawTile(image, g2d, x, y, false, null);
                 x -= 4 * scale;
             }
         }
@@ -500,7 +649,8 @@ public class Game extends JPanel {
         int discardedCount = 0;
         x = 20 * scale;
         y = 41 * scale;
-        for (Tile tile : discardedPile) {
+        for (int i = 0; i < discardedPile.size(); i++) {
+            Tile tile = discardedPile.get(i);
             if (discardedCount == 6) {
                 x = 20 * scale;
                 y = 45 * scale;
@@ -511,10 +661,13 @@ public class Game extends JPanel {
             x += 3 * scale;
             fileName = tile.toFileName();
             image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
-            drawTile(image, g2d, x, y, false);
+            if (i == discardedPile.size() - 1 && whosTurn.equals(Orientation.EAST) && currentStatus.equals(Status.WAIT)) {
+                drawTile(image, g2d, x, y, false, Color.RED);
+            } else {
+                drawTile(image, g2d, x, y, false, null);
+            }
             discardedCount++;
         }
-
     }
 
     private void drawNorth(Graphics g) {
@@ -524,6 +677,7 @@ public class Game extends JPanel {
         LinkedList<Tile> discardedPile = discardedPiles.get(Orientation.NORTH);
         String fileName; BufferedImage image, imageRotated;
         int x = 3 * scale, y = 11 * scale;
+        boolean turnedRed = false;
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
@@ -531,7 +685,13 @@ public class Game extends JPanel {
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, true);
                 for (int i = 0; i < numTiles; i++) {
-                    drawTile(imageRotated, g2d, x, y, true);
+                    if (offeredTile != null && whosTurn.equals(Orientation.NORTH) && currentStatus.equals(Status.DECISION)
+                            && Tool.tileToPosition(offeredTile) == pos && !turnedRed) {
+                        drawTile(imageRotated, g2d, x, y, true, Color.red);
+                        turnedRed = true;
+                    } else {
+                        drawTile(imageRotated, g2d, x, y, true, null);
+                    }
                     y += 3 * scale;
                 }
             }
@@ -544,7 +704,7 @@ public class Game extends JPanel {
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, true);
                 for (int i = 0; i < 3; i++) {
-                    drawTile(imageRotated, g2d, x, y, true);
+                    drawTile(imageRotated, g2d, x, y, true, null);
                     y -= 3 * scale;
                 }
                 y -= scale;
@@ -552,11 +712,11 @@ public class Game extends JPanel {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, true);
-                drawTile(imageRotated, g2d, x, y, true);
-                drawTile(image, g2d, x, y - 4 * scale, false);
-                drawTile(image, g2d, x + 3 * scale, y - 4 * scale, false);
+                drawTile(imageRotated, g2d, x, y, true, null);
+                drawTile(image, g2d, x, y - 4 * scale, false, null);
+                drawTile(image, g2d, x + 3 * scale, y - 4 * scale, false, null);
                 y -= 7 * scale;
-                drawTile(imageRotated, g2d, x, y, true);
+                drawTile(imageRotated, g2d, x, y, true, null);
                 y -= 4 * scale;
             }
         }
@@ -564,7 +724,8 @@ public class Game extends JPanel {
         int discardedCount = 0;
         x = 19 * scale;
         y = 20 * scale;
-        for (Tile tile : discardedPile) {
+        for (int i = 0; i < discardedPile.size(); i++) {
+            Tile tile = discardedPile.get(i);
             if (discardedCount == 6) {
                 x = 15 * scale;
                 y = 20 * scale;
@@ -576,7 +737,11 @@ public class Game extends JPanel {
             fileName = tile.toFileName();
             image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
             imageRotated = ImageProcessor.rotate(image, true);
-            drawTile(imageRotated, g2d, x, y, true);
+            if (i == discardedPile.size() - 1 && whosTurn.equals(Orientation.NORTH) && currentStatus.equals(Status.WAIT)) {
+                drawTile(imageRotated, g2d, x, y, true, Color.red);
+            } else {
+                drawTile(imageRotated, g2d, x, y, true, null);
+            }
             discardedCount++;
         }
     }
@@ -588,6 +753,7 @@ public class Game extends JPanel {
         LinkedList<Tile> discardedPile = discardedPiles.get(Orientation.SOUTH);
         String fileName; BufferedImage image, imageRotated;
         int x = 57 * scale, y = 50 * scale;
+        boolean turnedRed = false;
         for (int pos = 0; pos < concealedHand.length; pos++) {
             int numTiles = concealedHand[pos];
             if (numTiles > 0) {
@@ -595,7 +761,13 @@ public class Game extends JPanel {
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, false);
                 for (int i = 0; i < numTiles; i++) {
-                    drawTile(imageRotated, g2d, x, y, true);
+                    if (offeredTile != null && whosTurn.equals(Orientation.SOUTH) && currentStatus.equals(Status.DECISION)
+                            && Tool.tileToPosition(offeredTile) == pos && !turnedRed) {
+                        drawTile(imageRotated, g2d, x, y, true, Color.RED);
+                        turnedRed = true;
+                    } else {
+                        drawTile(imageRotated, g2d, x, y, true, null);
+                    }
                     y -= 3 * scale;
                 }
             }
@@ -608,7 +780,7 @@ public class Game extends JPanel {
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, false);
                 for (int i = 0; i < 3; i++) {
-                    drawTile(imageRotated, g2d, x, y, true);
+                    drawTile(imageRotated, g2d, x, y, true, null);
                     y += 3 * scale;
                 }
                 y += scale;
@@ -616,11 +788,11 @@ public class Game extends JPanel {
                 fileName = Tool.positionToTile(pos).toFileName();
                 image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
                 imageRotated = ImageProcessor.rotate(image, false);
-                drawTile(imageRotated, g2d, x, y, true);
-                drawTile(image, g2d, x + scale, y + 3 * scale, false);
-                drawTile(image, g2d, x - 2 * scale, y + 3 * scale, false);
+                drawTile(imageRotated, g2d, x, y, true, null);
+                drawTile(image, g2d, x + scale, y + 3 * scale, false, null);
+                drawTile(image, g2d, x - 2 * scale, y + 3 * scale, false, null);
                 y += 7 * scale;
-                drawTile(imageRotated, g2d, x, y, true);
+                drawTile(imageRotated, g2d, x, y, true, null);
                 y += 4 * scale;
             }
         }
@@ -628,7 +800,8 @@ public class Game extends JPanel {
         int discardedCount = 0;
         x = 41 * scale;
         y = 41 * scale;
-        for (Tile tile : discardedPile) {
+        for (int i = 0; i < discardedPile.size(); i++) {
+            Tile tile = discardedPile.get(i);
             if (discardedCount == 6) {
                 x = 45 * scale;
                 y = 41 * scale;
@@ -640,22 +813,34 @@ public class Game extends JPanel {
             fileName = tile.toFileName();
             image = ImageProcessor.loadImage(PIC_SRC + fileName + PIC_FORMAT, 3 * scale, 4 * scale);
             imageRotated = ImageProcessor.rotate(image, false);
-            drawTile(imageRotated, g2d, x, y, true);
+            if (i == discardedPile.size() - 1 && whosTurn.equals(Orientation.SOUTH) && currentStatus.equals(Status.WAIT)) {
+                drawTile(imageRotated, g2d, x, y, true, Color.RED);
+            } else {
+                drawTile(imageRotated, g2d, x, y, true, null);
+            }
             discardedCount++;
         }
     }
 
-    private void drawTile(BufferedImage image, Graphics2D g2d, int X, int Y, boolean sideway) {
+    private void drawTile(BufferedImage image, Graphics2D g2d, int X, int Y, boolean sideway, Color outline) {
         if (!sideway) {
             g2d.drawImage(FRONT, X, Y, 3 * scale, 4 * scale, null);
             g2d.drawImage(image, X, Y, 3 * scale, 4 * scale, null);
-            g2d.setColor(Color.LIGHT_GRAY);
+            if (outline == null) {
+                g2d.setColor(Color.LIGHT_GRAY);
+            } else {
+                g2d.setColor(outline);
+            }
             g2d.setStroke(new BasicStroke(2f));
             g2d.drawRoundRect(X, Y, 3 * scale, 4 * scale, scale / 2, scale / 2);
         } else {
             g2d.drawImage(FRONT, X, Y, 4 * scale, 3 * scale, null);
             g2d.drawImage(image, X, Y, 4 * scale, 3 * scale, null);
-            g2d.setColor(Color.LIGHT_GRAY);
+            if (outline == null) {
+                g2d.setColor(Color.LIGHT_GRAY);
+            } else {
+                g2d.setColor(outline);
+            }
             g2d.setStroke(new BasicStroke(2f));
             g2d.drawRoundRect(X, Y, 4 * scale, 3 * scale, scale / 2, scale / 2);
         }

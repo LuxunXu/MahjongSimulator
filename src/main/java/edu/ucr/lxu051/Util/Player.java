@@ -65,7 +65,7 @@ public class Player extends Hand {
     public int decideAction(boolean canGang) throws IOException { // int = 27 means gang
         if (canHu()) {
             System.out.println(getOrientation() + " declared ZiMo.");
-            hu();
+            hu("ZiMo");
             System.out.println(toString());
             return 200;
         }
@@ -77,6 +77,7 @@ public class Player extends Hand {
         }
         LinkedList<Integer> canGangAttachedSet = canGangAttached();
         if (!canGangAttachedSet.isEmpty() && canGang) {
+            System.out.println(getOrientation() + " wants to JiaGang.");
             int i = canGangAttachedSet.getFirst();
             return 400 + i;
         }

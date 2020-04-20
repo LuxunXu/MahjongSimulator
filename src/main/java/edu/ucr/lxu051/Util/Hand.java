@@ -9,6 +9,14 @@ public class Hand {
     private Simple forfeitedSimple;
     private Orientation orientation;
     private boolean finished;
+    private String huType;
+
+    // Debugging only
+    public static void main(String[] args) throws IOException{
+        Hand hand = new Hand(Orientation.WEST);
+        hand.initHandByArray("0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 2 0 0 1 1 1 0 2 0 0 2");
+        System.out.println(hand.canHu());
+    }
 
     public Hand(Orientation orientation) {
         concealedHand = new int[27];
@@ -30,6 +38,15 @@ public class Hand {
             list.add(new Tile(tileToken));
         }
         initHand(list);
+    }
+
+    public void initHandByArray(String handString) {
+        String[] nums = handString.split("\\s");
+        int i = 0;
+        for (String num : nums) {
+            concealedHand[i] = Integer.parseInt(num);
+            i++;
+        }
     }
 
     public void drawTile(Tile tile) {
@@ -115,7 +132,8 @@ public class Hand {
         revealedHand[i] = 4;
     }
 
-    public void hu() {
+    public void hu(String type) {
+        huType = type;
         finished = true;
     }
 
@@ -123,25 +141,34 @@ public class Hand {
         return canHuHelper(concealedHand);
     }
 
-    private boolean canHuHelper(int[] curHand) throws IOException {
+    public boolean canHuHelper(int[] curHand) throws IOException {
+//        // Debugging
+//        System.out.print(orientation + ": ");
+//        for (int i = 0; i < curHand.length; i++) {
+//            System.out.print(curHand[i] + " ");
+//        }
+//        System.out.println();
         boolean isSevenPairs = isSevenPairs(curHand);
         if (isSevenPairs) {
             return true;
         }
         ArrayList<String> testSplits = new ArrayList<>();
         String split = "";
-        boolean allSplitsAre2 = true;
+        int split2Count = 0;
         for (int j = 0; j < 27; j++) {
             if (curHand[j] == 0) {
                 if (!split.isEmpty()) {
+                    if (split.equals("2")) {
+                        split2Count++;
+                    }
                     testSplits.add(split);
                 }
                 split = "";
             } else {
                 if (j % 9 == 0) {
                     if (!split.isEmpty()) {
-                        if (!split.equals("2")) {
-                            allSplitsAre2 = false;
+                        if (split.equals("2")) {
+                            split2Count++;
                         }
                         testSplits.add(split);
                     }
@@ -152,12 +179,12 @@ public class Hand {
             }
         }
         if (!split.isEmpty()) {
-            if (!split.equals("2")) {
-                allSplitsAre2 = false;
+            if (split.equals("2")) {
+                split2Count++;
             }
             testSplits.add(split);
         }
-        if (allSplitsAre2 && testSplits.size() > 1) {
+        if (split2Count > 1) {
             return false;
         }
         for (String testSplit : testSplits) {
@@ -223,6 +250,10 @@ public class Hand {
 
     public boolean isFinished() {
         return finished;
+    }
+
+    public String getHuType() {
+        return huType;
     }
 
     @Override
