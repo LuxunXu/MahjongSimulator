@@ -10,6 +10,7 @@ public class Hand {
     private Orientation orientation;
     private boolean finished;
     private String huType;
+    private boolean revealed;
 
     // Debugging only
     public static void main(String[] args) throws IOException{
@@ -23,6 +24,7 @@ public class Hand {
         revealedHand = new int[27];
         this.orientation = orientation;
         finished = false;
+        revealed = false;
     }
 
     public void initHand(LinkedList<Tile> handList) {
@@ -83,6 +85,7 @@ public class Hand {
     public void peng(int i) {
         concealedHand[i] -= 2;
         revealedHand[i] = 3;
+        revealed = true;
     }
 
     public LinkedList<Integer> canGangConcealed() {
@@ -100,6 +103,7 @@ public class Hand {
         System.out.println(getOrientation() + " AnGang " + Tool.positionToTile(i).toString());
         concealedHand[i] -= 4;
         revealedHand[i] = 4;
+        revealed = true;
     }
 
     public boolean canGangRevealed(int i) {
@@ -113,6 +117,7 @@ public class Hand {
         System.out.println(getOrientation() + " mingGang " + Tool.positionToTile(i).toString());
         concealedHand[i] -= 3;
         revealedHand[i] = 4;
+        revealed = true;
     }
 
     public LinkedList<Integer> canGangAttached() {
@@ -130,6 +135,7 @@ public class Hand {
         System.out.println(getOrientation() + " jiaGang " + Tool.positionToTile(i).toString());
         concealedHand[i] -= 1;
         revealedHand[i] = 4;
+        revealed = true;
     }
 
     public void hu(String type) {
@@ -196,11 +202,14 @@ public class Hand {
         return true;
     }
 
-    public Set<Tile> isReady() throws IOException {
+    public boolean isReady(int[] hand) throws IOException {
+        return isReadySet(hand).size() > 0;
+    }
+
+    public Set<Tile> isReadySet(int[] hand) throws IOException {
         Set<Tile> readySet = new LinkedHashSet<>();
         for (int i = 0; i < 27; i++) {
-            int[] handCopy = Arrays.copyOf(concealedHand, 27);
-            if (isReadyHelper(handCopy, i)) {
+            if (isReadyHelper(hand, i)) {
                 readySet.add(Tool.positionToTile(i));
             }
         }
@@ -219,13 +228,13 @@ public class Hand {
     private boolean isSevenPairs(int[] curHand) {
         int count = 0;
         for (int num : curHand) {
-            if (num > 0) {
-                if (num % 2 == 0) {
-                    count += num / 2;
-                }
-            }
+            count += num / 2;
         }
         return count == 7;
+    }
+
+    public boolean isRevealed() {
+        return revealed;
     }
 
     public int[] getConcealedHand() {
@@ -255,6 +264,8 @@ public class Hand {
     public String getHuType() {
         return huType;
     }
+
+
 
     @Override
     public String toString() {

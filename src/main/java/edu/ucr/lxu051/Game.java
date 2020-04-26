@@ -38,21 +38,31 @@ public class Game extends JPanel {
         FRONT = ImageProcessor.loadImage(PIC_SRC + "Front" + PIC_FORMAT, 3 * scale, 4 * scale);
     }
 
-    public void initGame() {
+    public long initGame() {
+        return initGame(0);
+    }
+
+    public long initGame(long lastSeed) {
         tileMountain = new LinkedList<>();
         discardedPiles = new HashMap<>();
         players = new HashMap<>();
         playersLeft = new LinkedList<>();
         genMountain();
         Random rnd = new Random();
-        if (totalRandom) {
+        if (lastSeed != 0) {
+            seed = lastSeed;
+        } else if (totalRandom) {
             seed = System.currentTimeMillis();
         }
         rnd.setSeed(seed);
         System.out.println("Seed: " + seed + "L");
         Collections.shuffle(tileMountain, rnd);
         for (Orientation orientation : Orientation.values()) {
-            players.put(orientation, new Player(orientation));
+            if (orientation.equals(Orientation.EAST)) {
+                players.put(orientation, new PlayerAIV1(orientation));
+            } else {
+                players.put(orientation, new Player(orientation));
+            }
             discardedPiles.put(orientation, new LinkedList<>());
         }
         distributeStartingTiles();
@@ -67,6 +77,7 @@ public class Game extends JPanel {
             players.get(orientation).decideForfeitedSimple();
         }
         repaint();
+        return seed;
     }
 
     public void offer(Orientation orientation) {
@@ -78,7 +89,7 @@ public class Game extends JPanel {
         repaint();
     }
 
-    public int discard(Orientation orientation) {
+    public int discard(Orientation orientation) throws IOException {
         int discardedTile = players.get(orientation).discardAI();
         players.get(orientation).discardTile(discardedTile);
         repaint();

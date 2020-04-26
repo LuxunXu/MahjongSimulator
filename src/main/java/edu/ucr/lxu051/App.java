@@ -12,6 +12,7 @@ public class App extends JFrame {
     private final int SCALE = 13;
     private Game game;
     private JPanel contentPane;
+    private long seed;
 
     public static void main( String[] args ) throws IOException {
 
@@ -55,7 +56,14 @@ public class App extends JFrame {
         newGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                game.initGame();
+                seed = game.initGame();
+            }
+        });
+        JButton lastGameButton = new JButton("Last Game");
+        lastGameButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                seed = game.initGame(seed);
             }
         });
         JButton goButton = new JButton("Go");
@@ -81,10 +89,11 @@ public class App extends JFrame {
             }
         });
         controlPanel.add(newGameButton);
+        controlPanel.add(lastGameButton);
         controlPanel.add(goButton);
         controlPanel.add(stepButton);
 
-        game = new Game(SCALE,1587381837222L);
+        game = new Game(SCALE,0);
         game.setSize(64 * SCALE, 64 * SCALE);
 
         contentPane.add(game, BorderLayout.CENTER);
